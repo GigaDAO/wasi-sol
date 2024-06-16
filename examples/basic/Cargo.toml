@@ -1,0 +1,11 @@
+[package]
+name = "wasi-sol-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+log = "0.4.21"
+wasi-sol = { path = "../../" }
+wasm-logger = "0.2.0"
+yew = { version = "0.21.0", features = ["csr"] }

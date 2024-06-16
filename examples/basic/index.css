@@ -1,0 +1,99 @@
+body {
+    background-color: #111;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.wallet-adapter {
+    max-width: 600px;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(45deg, #1a1a1a, #333);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.header {
+    margin-bottom: 20px;
+}
+
+.wallet-info {
+    margin-bottom: 20px;
+}
+
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.connect-button {
+    display: flex;
+    background-color: #a033ff;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.connect-button:hover {
+    box-shadow: 0 0 10px rgba(160, 51, 255, 0.6);
+}
+
+.disconnect-button {
+    display: flex;
+    background-color: #e84855;
+    color: #fff;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+
+.connect-button img,
+.disconnect-button img {
+    width: 24px;
+    margin-right: 10px;
+}
+
+.connect-button:hover,
+.disconnect-button:hover {
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+}
+
+.disconnect-button:hover {
+    box-shadow: 0 0 10px rgba(232, 72, 85, 0.6);
+}
+
+footer {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #666;
+    font-size: 14px;
+}
