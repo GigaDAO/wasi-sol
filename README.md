@@ -3,6 +3,7 @@
 # 📖 WASI SOL
 
 [![made-with-rust](https://img.shields.io/badge/Made%20with-Rust-1f425f.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://app.netlify.com/sites/wasi-sol/deploys)
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-blue.svg)](https://www.rust-lang.org)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wiseaidev)
 [![Crates.io](https://img.shields.io/crates/v/wasi-sol.svg)](https://crates.io/crates/wasi-sol)
