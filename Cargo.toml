@@ -1,0 +1,20 @@
+[package]
+name = "wasi-sol"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.86"
+log = "0.4.21"
+serde_json = "1.0.117"
+solana-sdk = "=1.18.0"
+thiserror = "1.0.61"
+wasm-bindgen-futures = "0.4.42"
+gloo-storage = "0.3.0"
+js-sys = "0.3.69"
+serde = { version = "1.0.203", features = ["derive"] }
+web3 = { version = "0.19.0", default-features = false, features = ["eip-1193"] }
+wasm-bindgen = { version = "0.2.92", features = ["serde-serialize"] }
+solana-client-wasm = "1.18.0"
+emitter-rs = "0.0.5"
+yew = "0.21.0"
