@@ -11,6 +11,8 @@
 [![docs](https://docs.rs/wasi-sol/badge.svg)](https://docs.rs/wasi-sol/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+[![GigaDAO Discord](https://dcbadge.limes.pink/api/server/gigadao-gigadex-now-live-920188005686337566)](https://discord.gg/gigadao-gigadex-now-live-920188005686337566)
+
 ![WASI SOL Demo](https://github.com/wiseaidev/wasi-sol/assets/62179149/ed3668ef-6f18-4d74-a10d-5e1ae551c695)
 
 </div>
