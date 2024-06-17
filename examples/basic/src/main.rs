@@ -126,7 +126,7 @@ pub fn LoginPage() -> Html {
                 </div>
             </div>
             <footer class="footer">
-                <p>{ "2024 Wasi Sol." }</p>
+                <p>{ "2024 GigaDAO Foundation." }</p>
             </footer>
         </div>
     }
