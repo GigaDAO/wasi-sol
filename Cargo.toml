@@ -2,6 +2,17 @@
 name = "wasi-sol"
 version = "0.0.1"
 edition = "2021"
+description = "🔒 A Solana Wallet adapter for WASM frameworks."
+license = "MIT"
+keywords = ["blockchain", "solana", "wallet", "wasm", "yew"]
+categories = ["web-programming", "cryptography", "wasm"]
+repository = "https://github.com/gigadao/wasi-sol"
+documentation = "https://docs.rs/wasi-sol"
+authors = [
+	"GigaDAO Core Maintainers",
+	"Mahmoud Harmouch oss@wiseai.dev",
+]
+exclude = ["examples"]
 
 [dependencies]
 anyhow = "1.0.86"
@@ -18,3 +29,16 @@ wasm-bindgen = { version = "0.2.92", features = ["serde-serialize"] }
 solana-client-wasm = "1.18.0"
 emitter-rs = "0.0.5"
 yew = "0.21.0"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = "thin"
+strip = "symbols"
+
+[badges]
+maintenance = { status = "actively-developed" }

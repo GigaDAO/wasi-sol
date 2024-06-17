@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🦀 wasi-sol
+# 🦀 Wasi Sol
 
 [![made-with-rust](https://img.shields.io/badge/Made%20with-Rust-1f425f.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://app.netlify.com/sites/wasi-sol/deploys)
@@ -54,7 +54,7 @@ A Solana Wallet adapter for WASM frameworks.
 
 In addition to the [`examples`](examples) directory, you can use the following snippet of code to add `wasi-sol` wallet adapter using its built-in providers and hooks:
 
-```rust
+```rust , ignore
 use yew::prelude::*;
 
 use wasi_sol::{
