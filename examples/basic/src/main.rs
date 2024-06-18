@@ -7,7 +7,8 @@ use wasi_sol::{
         connection::{use_connection, ConnectionProvider},
         wallet::{use_wallet, WalletProvider},
     },
-    spawn_local
+    spawn_local,
+    pubkey::Pubkey
 };
 
 #[function_component]
@@ -50,6 +51,10 @@ pub fn LoginPage() -> Html {
 
             spawn_local(async move {
                 let mut wallet_info = (*wallet_adapter).clone();
+
+                wallet_info.emitter.on("connect", move |public_key: Pubkey| {
+                            log::info!("Event Listener: Got pubkey {}", public_key);
+                });
 
                 match wallet_info.connect().await {
                     Ok(_) => {

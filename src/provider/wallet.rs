@@ -37,10 +37,7 @@ pub fn WalletProvider(props: &WalletProviderProps) -> Html {
             .cloned()
     });
 
-    let wallet = (*wallet_context).clone().unwrap();
-
-    let context =
-        use_state(|| BaseWalletAdapter::new(wallet.name(), props.endpoint, wallet.icon()));
+    let context = use_state(|| (*wallet_context).clone().unwrap());
 
     html! {
         <ContextProvider<BaseWalletAdapter> context={(*context).clone()}>
