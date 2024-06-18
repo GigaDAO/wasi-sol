@@ -2,8 +2,7 @@
 
 use anyhow::Result;
 
-use emitter_rs::EventEmitter;
-
+use solana_client_wasm::WasmClient as RpcClient;
 use solana_sdk::{pubkey::Pubkey, signature::Signature, transaction::Transaction};
 
 use crate::core::{
@@ -28,15 +27,14 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
     fn connected(&self) -> bool {
         self.public_key().is_some()
     }
-    fn emitter(&self) -> EventEmitter;
 
     async fn auto_connect(&mut self) -> Result<(), WalletError>;
     async fn connect(&mut self) -> Result<(), WalletError>;
     async fn disconnect(&mut self) -> Result<(), WalletError>;
     async fn send_transaction(
         &mut self,
+        client: RpcClient,
         transaction: TransactionOrVersionedTransaction,
-        connection: &str,
     ) -> Result<Signature, WalletError>;
 }
 

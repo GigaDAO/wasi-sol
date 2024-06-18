@@ -179,6 +179,54 @@ fn main() {
     yew::Renderer::<App>::new().render();
 }
 ```
+## 🎧 Event Listener
+
+This crate implements a handy event listener pattern with a built-in `emitter` object that you can use to subscribe to particular events. This functionality allows you to set state in the UI, perform actions on wallet connect, and more.
+
+
+```rust , ignore
+// ...snip...
+
+#[function_component]
+pub fn LoginPage() -> Html {
+    let wallet_context = use_wallet();
+    let connected = use_state(|| false);
+    let wallet_adapter = use_state(|| wallet_context);
+
+    let connect_wallet = {
+        // ...snip...
+
+        Callback::from(move |_| {
+            // ...snip...
+
+            spawn_local(async move {
+                let mut wallet_info = (*wallet_adapter).clone();
+
+                wallet_info.emitter.on("connect", move |public_key: Pubkey| {
+                    log::info!("Event Listener: Got pubkey {}", public_key);
+                    wallet_adapter.set(wallet_info);
+                    connected.set(true);
+                });
+
+                match wallet_info.connect().await {
+                    Ok(_) => {
+                    }
+                    Err(err) => {
+                        log::error!("Failed to connect wallet: {}", err);
+                    }
+                }
+            });
+        })
+    };
+
+    // ...snip...
+
+    html! {
+        <>
+        </>
+    }
+}
+```
 
 ## 👥 Contributing
 

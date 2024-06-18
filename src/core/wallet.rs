@@ -42,7 +42,7 @@ pub struct BaseWalletAdapter {
     ready_state: WalletReadyState,
     public_key: Option<Pubkey>,
     connecting: bool,
-    emitter: EventEmitter,
+    pub emitter: EventEmitter,
 }
 
 impl BaseWalletAdapter {
@@ -82,10 +82,6 @@ impl WalletAdapter for BaseWalletAdapter {
 
     fn connecting(&self) -> bool {
         self.connecting
-    }
-
-    fn emitter(&self) -> EventEmitter {
-        self.emitter.clone()
     }
 
     async fn auto_connect(&mut self) -> Result<(), WalletError> {
@@ -174,17 +170,14 @@ impl WalletAdapter for BaseWalletAdapter {
 
     async fn send_transaction(
         &mut self,
+        client: RpcClient,
         transaction: TransactionOrVersionedTransaction,
-        connection: &str,
     ) -> Result<Signature, WalletError> {
         info!("Sending transaction...");
 
         if self.public_key.is_none() {
             return Err(WalletError::WalletNotConnectedError);
         }
-
-        let client = RpcClient::new(connection);
-
         let signature = match transaction {
             TransactionOrVersionedTransaction::Transaction(tx) => client
                 .send_and_confirm_transaction(&tx)
