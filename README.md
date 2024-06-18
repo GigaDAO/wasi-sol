@@ -181,6 +181,8 @@ fn main() {
 ```
 ## 🎧 Event Listener
 
+![Event Emitter Pattern](https://github.com/GigaDAO/wasi-sol/assets/62179149/65edfdc2-d86c-464a-a67f-5ef08099adc6)
+
 This crate implements a handy event listener pattern with a built-in `emitter` object that you can use to subscribe to particular events. This functionality allows you to set state in the UI, perform actions on wallet connect, and more.
 
 
@@ -227,6 +229,8 @@ pub fn LoginPage() -> Html {
     }
 }
 ```
+
+![event emitter demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/8d271384-9565-47dc-8e26-212ddf3bdfc0)
 
 ## 👥 Contributing
 
