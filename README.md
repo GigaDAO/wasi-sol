@@ -3,7 +3,8 @@
 # 🦀 Wasi Sol
 
 [![made-with-rust](https://img.shields.io/badge/Made%20with-Rust-1f425f.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://app.netlify.com/sites/wasi-sol/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://wasi-sol-yew.netlify.app/)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/15f88b9f-edfd-4e94-9bca-2150b95343ca/deploy-status)](https://wasi-sol-dio.netlify.app)
 [![Rust](https://img.shields.io/badge/Rust-1.75%2B-blue.svg)](https://www.rust-lang.org)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wiseaidev)
 [![Crates.io](https://img.shields.io/crates/v/wasi-sol.svg)](https://crates.io/crates/wasi-sol)
@@ -13,7 +14,10 @@
 
 [![GigaDAO Discord](https://dcbadge.limes.pink/api/server/gigadao-gigadex-now-live-920188005686337566)](https://discord.gg/gigadao-gigadex-now-live-920188005686337566)
 
-![WASI SOL Demo](https://github.com/wiseaidev/wasi-sol/assets/62179149/ed3668ef-6f18-4d74-a10d-5e1ae551c695)
+| Framework | Demo |
+| --- | --- |
+| Yew | ![yew-demo](https://github.com/wiseaidev/wasi-sol/assets/62179149/ed3668ef-6f18-4d74-a10d-5e1ae551c695) |
+| Dioxus | ![dioxus-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/8f2f4dda-aae2-4bb4-ad1d-1794b10d8949) |
 
 </div>
 
