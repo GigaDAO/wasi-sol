@@ -4,7 +4,7 @@ version = "0.0.2"
 edition = "2021"
 description = "🔒 A Solana Wallet adapter for WASM frameworks."
 license = "MIT"
-keywords = ["blockchain", "solana", "wallet", "wasm", "yew"]
+keywords = ["blockchain", "solana", "wallet", "wasm", "yew", "dioxus"]
 categories = ["web-programming", "cryptography", "wasm"]
 repository = "https://github.com/gigadao/wasi-sol"
 documentation = "https://docs.rs/wasi-sol"
@@ -28,7 +28,12 @@ web3 = { version = "0.19.0", default-features = false, features = ["eip-1193"] }
 wasm-bindgen = { version = "0.2.92", features = ["serde-serialize"] }
 solana-client-wasm = "1.18.0"
 emitter-rs = "0.0.5"
-yew = "0.21.0"
+yew = { version = "0.21.0", optional = true }
+dioxus = { version = "0.5", optional = true }
+
+[features]
+y = ["yew", ]
+dio = ["dioxus", ]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -36,7 +41,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 
 [profile.release]
 codegen-units = 1
-opt-level = "z"
+opt-level = 3
 lto = "thin"
 strip = "symbols"
 
