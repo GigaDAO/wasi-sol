@@ -3,12 +3,12 @@ use yew::prelude::*;
 use wasi_sol::{
     core::traits::WalletAdapter,
     core::wallet::BaseWalletAdapter,
-    provider::{
+    provider::yew::{
         connection::{use_connection, ConnectionProvider},
         wallet::{use_wallet, WalletProvider},
     },
+    pubkey::Pubkey,
     spawn_local,
-    pubkey::Pubkey
 };
 
 #[function_component]
@@ -52,9 +52,11 @@ pub fn LoginPage() -> Html {
             spawn_local(async move {
                 let mut wallet_info = (*wallet_adapter).clone();
 
-                wallet_info.emitter.on("connect", move |public_key: Pubkey| {
-                            log::info!("Event Listener: Got pubkey {}", public_key);
-                });
+                wallet_info
+                    .emitter
+                    .on("connect", move |public_key: Pubkey| {
+                        log::info!("Event Listener: Got pubkey {}", public_key);
+                    });
 
                 match wallet_info.connect().await {
                     Ok(_) => {
@@ -100,6 +102,7 @@ pub fn LoginPage() -> Html {
     html! {
         <div class="wallet-adapter">
             <header class="header">
+                <img src="images/logo.jpeg" alt="Yew Logo" class="yew-logo" />
                 <h1>{ "Wasi Sol Wallet Adapter" }</h1>
             </header>
             <div class="content">

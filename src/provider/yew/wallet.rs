@@ -1,6 +1,6 @@
 use crate::{
     core::{traits::WalletAdapter, wallet::BaseWalletAdapter},
-    provider::local_storage::use_local_storage,
+    provider::yew::local_storage::use_local_storage,
 };
 
 use yew::prelude::*;
