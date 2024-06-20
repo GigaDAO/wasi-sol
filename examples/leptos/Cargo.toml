@@ -1,0 +1,11 @@
+[package]
+name = "leptos-wasi-sol"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+leptos = { version = "0.6.12", features = ["csr"] }
+console_error_panic_hook = "0.1.7"
+log = "0.4.21"
+wasi-sol = { path = "../../", features = ["lep"] }
+wasm-logger = "0.2.0"
