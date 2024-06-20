@@ -3,6 +3,7 @@
 use std::str::FromStr;
 
 use js_sys::Promise;
+use std::sync::Arc;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
 
@@ -13,9 +14,12 @@ use serde::{Deserialize, Serialize};
 use anyhow::Result;
 
 use solana_client_wasm::WasmClient as RpcClient;
-use solana_sdk::{pubkey::Pubkey, signature::Signature};
-
-use web3::transports::eip_1193::{Eip1193, Provider};
+use solana_sdk::{
+    bs58,
+    pubkey::Pubkey,
+    signature::{Signature, Signer},
+    signer::keypair::Keypair,
+};
 
 use crate::{
     core::{
@@ -47,11 +51,17 @@ pub struct BaseWalletAdapter {
 
 impl BaseWalletAdapter {
     pub fn new(name: &str, url: &str, icon: &str) -> Self {
+        let ready_state = if cfg!(target_arch = "wasm32") {
+            WalletReadyState::Unsupported
+        } else {
+            WalletReadyState::NotDetected
+        };
+
         BaseWalletAdapter {
+            ready_state,
             name: name.to_string(),
             url: url.to_string(),
             icon: icon.to_string(),
-            ready_state: WalletReadyState::NotDetected,
             public_key: None,
             connecting: false,
             emitter: EventEmitter::new(),
@@ -60,16 +70,16 @@ impl BaseWalletAdapter {
 }
 
 impl WalletAdapter for BaseWalletAdapter {
-    fn name(&self) -> &str {
-        &self.name
+    fn name(&self) -> String {
+        self.name.to_string()
     }
 
-    fn url(&self) -> &str {
-        &self.url
+    fn url(&self) -> String {
+        self.url.to_string()
     }
 
-    fn icon(&self) -> &str {
-        &self.icon
+    fn icon(&self) -> String {
+        self.icon.to_string()
     }
 
     fn ready_state(&self) -> WalletReadyState {
@@ -92,20 +102,12 @@ impl WalletAdapter for BaseWalletAdapter {
         info!("Connecting to wallet...");
 
         if self.connecting {
+            self.emit_error(WalletError::WalletConnectionError);
             return Err(WalletError::WalletConnectionError);
         }
 
         self.connecting = true;
 
-        let provider: Provider = Provider::default().unwrap().unwrap();
-
-        let transport = Eip1193::new(provider);
-
-        let web3 = web3::Web3::new(transport);
-
-        // HACK: Trigger installed wallet adapters
-        // TODO: Use the SOLANA object to trigger wallet adapters
-        web3.eth().request_accounts().await.unwrap();
         let options = js_sys::Object::new();
         js_sys::Reflect::set(
             &options,
@@ -113,7 +115,7 @@ impl WalletAdapter for BaseWalletAdapter {
             &JsValue::from_bool(true),
         )
         .unwrap();
-        let promise: Promise = SOLANA.connect(&options);
+        let promise: Promise = SOLANA.sign_in(&options);
         let result = JsFuture::from(promise).await;
 
         match result {
@@ -146,6 +148,7 @@ impl WalletAdapter for BaseWalletAdapter {
         info!("Disconnecting from wallet...");
 
         if self.public_key.is_none() {
+            self.emit_error(WalletError::WalletDisconnectedError);
             return Err(WalletError::WalletDisconnectedError);
         }
 
@@ -170,12 +173,13 @@ impl WalletAdapter for BaseWalletAdapter {
 
     async fn send_transaction(
         &mut self,
-        client: RpcClient,
+        client: Arc<RpcClient>,
         transaction: TransactionOrVersionedTransaction,
     ) -> Result<Signature, WalletError> {
         info!("Sending transaction...");
 
         if self.public_key.is_none() {
+            self.emit_error(WalletError::WalletNotConnectedError);
             return Err(WalletError::WalletNotConnectedError);
         }
         let signature = match transaction {
@@ -197,6 +201,14 @@ impl WalletAdapter for BaseWalletAdapter {
         info!("Transaction sent: {}", signature);
         Ok(signature)
     }
+
+    async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String {
+        let message_bytes = message.as_bytes();
+
+        let signature = keypair.sign_message(message_bytes);
+
+        bs58::encode(signature).into_string()
+    }
 }
 
 impl WalletAdapterEvents for BaseWalletAdapter {
@@ -208,7 +220,7 @@ impl WalletAdapterEvents for BaseWalletAdapter {
         self.emitter.emit("disconnect", ());
     }
 
-    fn error(&mut self, error: WalletError) {
+    fn emit_error(&mut self, error: WalletError) {
         self.emitter.emit("error", error);
     }
 

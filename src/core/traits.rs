@@ -3,7 +3,10 @@
 use anyhow::Result;
 
 use solana_client_wasm::WasmClient as RpcClient;
-use solana_sdk::{pubkey::Pubkey, signature::Signature, transaction::Transaction};
+use solana_sdk::{
+    pubkey::Pubkey, signature::Signature, signer::keypair::Keypair, transaction::Transaction,
+};
+use std::sync::Arc;
 
 use crate::core::{
     error::WalletError, transaction::TransactionOrVersionedTransaction, wallet::WalletReadyState,
@@ -12,30 +15,30 @@ use crate::core::{
 pub trait WalletAdapterEvents {
     fn emit_connect(&mut self, public_key: Pubkey);
     fn emit_disconnect(&mut self);
-    fn error(&mut self, error: WalletError);
+    fn emit_error(&mut self, error: WalletError);
     fn ready_state_change(&mut self, ready_state: WalletReadyState);
     fn emit_transaction_sent(&mut self, signature: Signature);
 }
 
 pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
-    fn name(&self) -> &str;
-    fn url(&self) -> &str;
-    fn icon(&self) -> &str;
+    fn name(&self) -> String;
+    fn url(&self) -> String;
+    fn icon(&self) -> String;
     fn ready_state(&self) -> WalletReadyState;
     fn public_key(&self) -> Option<Pubkey>;
     fn connecting(&self) -> bool;
     fn connected(&self) -> bool {
         self.public_key().is_some()
     }
-
     async fn auto_connect(&mut self) -> Result<(), WalletError>;
     async fn connect(&mut self) -> Result<(), WalletError>;
     async fn disconnect(&mut self) -> Result<(), WalletError>;
     async fn send_transaction(
         &mut self,
-        client: RpcClient,
+        client: Arc<RpcClient>,
         transaction: TransactionOrVersionedTransaction,
     ) -> Result<Signature, WalletError>;
+    async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String;
 }
 
 pub trait SignerWalletAdapter: WalletAdapter {
