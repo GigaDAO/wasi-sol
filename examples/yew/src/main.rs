@@ -19,7 +19,8 @@ use web_sys::HtmlInputElement;
 
 #[function_component]
 pub fn App() -> Html {
-    let endpoint = "https://mainnet.helius-rpc.com/?api-key=5478a500-a976-4ca2-838f-82f82ec37210";
+    // Use helius for guaranteed transaction success;
+    let endpoint = "https://api.mainnet-beta.solana.com";
     let wallets = vec![BaseWalletAdapter::new(
         "Phantom",
         "https://phantom.app",
