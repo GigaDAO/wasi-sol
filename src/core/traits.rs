@@ -38,6 +38,10 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
         client: Arc<RpcClient>,
         transaction: TransactionOrVersionedTransaction,
     ) -> Result<Signature, WalletError>;
+    async fn sign_transaction(
+        &mut self,
+        transaction: Transaction,
+    ) -> Result<Signature, WalletError>;
     async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String;
 }
 

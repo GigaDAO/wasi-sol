@@ -1,9 +1,9 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc = include_str!("../README.md")]
 
+pub(crate) mod adapter;
 pub mod core;
 pub mod provider;
-pub mod solana;
 
 // re-export
 pub use solana_sdk::*;
