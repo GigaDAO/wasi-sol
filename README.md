@@ -30,6 +30,7 @@ A Solana Wallet adapter for WASM frameworks.
 | Wallet    | Supported   | Features          |
 |-----------|-------------|-------------------|
 | Phantom   | ✅          | All               |
+| Solflare  | ✅          | All               |
 
 ## 🌐 Wasm Frameworks Support
 
@@ -47,8 +48,8 @@ A Solana Wallet adapter for WASM frameworks.
 | `disconnect`          | ✅        | ✅     |
 | `send_transaction`    | ✅        | ✅     |
 | `sign_in`             | ✅        | ✅     |
-| `sign_message`        | ✅        | ✅     |
-| `sign_transaction`    | ⬛        | ⬛     |
+| `sign_message`        | ✅        | ⬛     |
+| `sign_transaction`    | ✅        | ⬛     |
 | `sign_all_transactions` | ⬛      | ⬛     |
 
 ⬛: TODO
