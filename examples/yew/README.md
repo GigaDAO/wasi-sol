@@ -1,4 +1,4 @@
-# 📚 WASI SOL YEW Phantom Component Example
+# 📚 WASI SOL YEW Component Example
 
 ## 🛠️ Pre-requisites:
 
@@ -25,13 +25,13 @@
 1. Fork/Clone the GitHub repository.
 
 	```bash
-	git clone https://github.com/wiseaidev/wasi-sol
+	git clone https://github.com/gigadao/wasi-sol
 	```
 
 1. Navigate to the application directory.
 
 	```bash
-	cd wasi-sol/examples/basic
+	cd wasi-sol/examples/yew
 	```
 
 1. Run the client:

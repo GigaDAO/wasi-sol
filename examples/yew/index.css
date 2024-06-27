@@ -37,7 +37,7 @@ body {
     margin-top: 20px;
 }
 
-.connect-button {
+.connect-button-phantom, .connect-button-solflare {
     display: flex;
     background-color: #a033ff;
     align-items: center;
@@ -54,7 +54,11 @@ body {
     z-index: 1;
 }
 
-.connect-button:hover {
+.connect-button-solflare {
+    background-color: #241e2a;
+}
+
+.connect-button-phantom:hover, .connect-button-solflare:hover {
     box-shadow: 0 0 10px rgba(160, 51, 255, 0.6);
 }
 
@@ -76,7 +80,8 @@ body {
 }
 
 
-.connect-button img,
+.connect-button-solflare img,
+.connect-button-phantom img,
 .disconnect-button img {
     width: 24px;
     margin-right: 10px;
@@ -86,7 +91,8 @@ body {
     width: 600px;
 }
 
-.connect-button:hover,
+.connect-button-solflare:hover,
+.connect-button-phantom:hover,
 .disconnect-button:hover {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
 }

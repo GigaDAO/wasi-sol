@@ -1,4 +1,4 @@
-# 📚 WASI SOL Dioxus Component Example
+# 📚 WASI SOL Leptos Component Example
 
 ## 🛠️ Pre-requisites:
 
@@ -8,10 +8,10 @@
     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
     ```
 
-1. Install [`Dioxus CLI`](https://dioxuslabs.com/learn/0.5/getting_started):
+1. Install [`trunk`](https://trunkrs.dev/):
 
     ```bash
-    cargo install dioxus-cli
+    cargo install --locked trunk
     ```
 
 1. Add Wasm target:
@@ -31,13 +31,13 @@
 1. Navigate to the application directory.
 
 	```bash
-	cd wasi-sol/examples/dioxus
+	cd wasi-sol/examples/leptos
 	```
 
 1. Run the client:
 
 	```sh
-	dx serve --port 3000
+	trunk serve --port 3000
 	```
 
 Navigate to http://localhost:3000 to explore the landing page.

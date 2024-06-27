@@ -3,7 +3,7 @@ use yew::prelude::*;
 use wasi_sol::{
     core::traits::WalletAdapter,
     core::transaction::TransactionOrVersionedTransaction,
-    core::wallet::BaseWalletAdapter,
+    core::wallet::{BaseWalletAdapter, Wallet},
     provider::yew::{
         connection::{use_connection, ConnectionProvider},
         wallet::{use_wallet, WalletProvider},
@@ -21,15 +21,22 @@ use web_sys::HtmlInputElement;
 pub fn App() -> Html {
     // Use helius for guaranteed transaction success;
     let endpoint = "https://api.mainnet-beta.solana.com";
-    let wallets = vec![BaseWalletAdapter::new(
-        "Phantom",
-        "https://phantom.app",
-        "images/phantom_logo.png",
-    )];
+    let wallets = vec![
+        BaseWalletAdapter::new(
+            "Solflare",
+            "https://solflare.com",
+            "images/solflare_logo.png",
+        ),
+        BaseWalletAdapter::new(
+            "Phantom",
+            "https://phantom.app",
+            "images/phantom_logo.png"
+        ),
+    ];
 
     html! {
         <ConnectionProvider {endpoint}>
-            <WalletProvider {endpoint} {wallets}>
+            <WalletProvider {wallets}>
                 <LoginPage />
             </WalletProvider>
         </ConnectionProvider>
@@ -39,12 +46,16 @@ pub fn App() -> Html {
 #[function_component]
 pub fn LoginPage() -> Html {
     let connection_context = use_connection();
-    let wallet_context = use_wallet();
+    let phantom_context = use_wallet(Wallet::Phantom);
+    let solflare_context = use_wallet(Wallet::Solflare);
     let connected = use_state(|| false);
     let confirmed = use_state(|| false);
-    let wallet_adapter = use_state(|| wallet_context);
+    let phantom_wallet_adapter = use_state(|| phantom_context);
+    let solflare_wallet_adapter = use_state(|| solflare_context);
 
-    let wallet_info = (*wallet_adapter).clone();
+    let phantom_wallet_info = (*phantom_wallet_adapter).clone();
+    let solflare_wallet_info = (*solflare_wallet_adapter).clone();
+
     let error = use_state(|| None as Option<String>);
 
     let signature = use_state(String::default);
@@ -62,28 +73,61 @@ pub fn LoginPage() -> Html {
     let input_amount_handle = use_state(|| 1);
     let input_amount = (*input_amount_handle).clone();
 
-    let connect_wallet = {
+    let connect_phantom_wallet = {
         let connected = connected.clone();
-        let wallet_adapter = wallet_adapter.clone();
+        let phantom_wallet_adapter = phantom_wallet_adapter.clone();
         let error = error.clone();
 
         Callback::from(move |_| {
             let connected = connected.clone();
-            let wallet_adapter = wallet_adapter.clone();
+            let phantom_wallet_adapter = phantom_wallet_adapter.clone();
             let error = error.clone();
 
             spawn_local(async move {
-                let mut wallet_info = (*wallet_adapter).clone();
+                let mut phantom_wallet_info = (*phantom_wallet_adapter).clone();
 
-                wallet_info
+                phantom_wallet_info
                     .emitter
                     .on("connect", move |public_key: Pubkey| {
                         log::info!("Event Listener: Got pubkey {}", public_key);
                     });
 
-                match wallet_info.connect().await {
+                match phantom_wallet_info.connect().await {
                     Ok(_) => {
-                        wallet_adapter.set(wallet_info);
+                        phantom_wallet_adapter.set(phantom_wallet_info);
+                        connected.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Failed to connect wallet: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
+
+    let connect_solflare_wallet = {
+        let connected = connected.clone();
+        let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+        let error = error.clone();
+
+        Callback::from(move |_| {
+            let connected = connected.clone();
+            let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut solflare_wallet_info = (*solflare_wallet_adapter).clone();
+
+                solflare_wallet_info
+                    .emitter
+                    .on("connect", move |public_key: Pubkey| {
+                        log::info!("Event Listener: Got pubkey {}", public_key);
+                    });
+
+                match solflare_wallet_info.connect().await {
+                    Ok(_) => {
+                        solflare_wallet_adapter.set(solflare_wallet_info);
                         connected.set(true);
                     }
                     Err(err) => {
@@ -97,26 +141,33 @@ pub fn LoginPage() -> Html {
 
     let disconnect_wallet = {
         let connected = connected.clone();
-        let wallet_adapter = wallet_adapter.clone();
+        let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+        let phantom_wallet_adapter = phantom_wallet_adapter.clone();
         let error = error.clone();
 
         Callback::from(move |_| {
             let connected = connected.clone();
-            let wallet_adapter = wallet_adapter.clone();
+            let phantom_wallet_adapter = phantom_wallet_adapter.clone();
+            let solflare_wallet_adapter = solflare_wallet_adapter.clone();
             let error = error.clone();
 
             spawn_local(async move {
-                let mut wallet_info = (*wallet_adapter).clone();
+                let mut phantom_wallet_info = (*phantom_wallet_adapter).clone();
+                let mut solflare_wallet_info = (*solflare_wallet_adapter).clone();
 
-                match wallet_info.disconnect().await {
+                match phantom_wallet_info.disconnect().await {
                     Ok(_) => {
-                        wallet_adapter.set(wallet_info);
+                        phantom_wallet_adapter.set(phantom_wallet_info);
                         connected.set(false);
                     }
-                    Err(err) => {
-                        log::error!("Failed to disconnect wallet: {}", err);
-                        error.set(Some(err.to_string()));
+                    Err(err) => {}
+                }
+                match solflare_wallet_info.disconnect().await {
+                    Ok(_) => {
+                        solflare_wallet_adapter.set(solflare_wallet_info);
+                        connected.set(false);
                     }
+                    Err(err) => {}
                 }
             });
         })
@@ -162,7 +213,7 @@ pub fn LoginPage() -> Html {
     };
 
     let transfer_sol = {
-        let wallet_adapter = wallet_adapter.clone();
+        let phantom_wallet_adapter = phantom_wallet_adapter.clone();
         let confirmed = confirmed.clone();
         let input_secret = input_secret.clone();
         let input_dest = input_dest.clone();
@@ -175,12 +226,12 @@ pub fn LoginPage() -> Html {
             let input_dest = input_dest.clone();
             let confirmed = confirmed.clone();
 
-            let wallet_adapter = wallet_adapter.clone();
+            let phantom_wallet_adapter = phantom_wallet_adapter.clone();
             let connection_context = connection_context.clone();
             let error = error.clone();
 
             spawn_local(async move {
-                let mut wallet_info = (*wallet_adapter).clone();
+                let mut wallet_info = (*phantom_wallet_adapter).clone();
                 let public_key = wallet_info.public_key().unwrap();
                 let client = &connection_context.connection;
 
@@ -230,8 +281,8 @@ pub fn LoginPage() -> Html {
             <div class="content">
                 <div class="wallet-info">
                     if *connected {
-                        if let Some(ref key) = wallet_info.public_key() {
-                            <p>{ format!("Connected Wallet: {}", wallet_info.name()) }</p>
+                        if let Some(ref key) = phantom_wallet_info.public_key() {
+                            <p>{ format!("Connected Wallet: {}", phantom_wallet_info.name()) }</p>
                             <p>{ format!("Connected Public Key: {}", key) }</p>
                             <div class="send-sol-form">
                                 <h2 class="form-title">{ "Transfer SOL" }</h2>
@@ -289,6 +340,9 @@ pub fn LoginPage() -> Html {
                                     </a>
                                 </div>
                             }
+                        } else if let Some(ref key) = solflare_wallet_info.public_key() {
+                            <p>{ format!("Connected Wallet: {}", solflare_wallet_info.name()) }</p>
+                            <p>{ format!("Connected Public Key: {}", key) }</p>
                         } else {
                             <p>{ "Connected but no wallet info available" }</p>
                         }
@@ -296,14 +350,41 @@ pub fn LoginPage() -> Html {
                 </div>
                 <div class="buttons">
                     if !*connected {
-                        <button class="connect-button" onclick={connect_wallet}>
-                            <img src={wallet_info.icon()} alt="Phantom Wallet" class="button-icon" />
+                        <button
+                            class="connect-button-phantom"
+                            onclick={connect_phantom_wallet.clone()}
+                        >
+                            <img
+                                src={phantom_wallet_info.icon()}
+                                alt="Phantom Wallet"
+                                class="button-icon"
+                            />
                             { "Connect Wallet" }
+                        </button>
+                        <button
+                            class="connect-button-solflare"
+                            onclick={connect_solflare_wallet.clone()}
+                        >
+                            <img
+                                src={solflare_wallet_info.icon()}
+                                alt="Solflare Wallet"
+                                class="button-icon"
+                            />
+                            { "Connect Wallet" }
+                        </button>
+                    } else if let Some(ref key) = phantom_wallet_info.public_key() {
+                        <button class="disconnect-button" onclick={disconnect_wallet}>
+                            <img
+                                src={phantom_wallet_info.icon()}
+                                alt="Disconnect Wallet"
+                                class="button-icon"
+                            />
+                            { "Disconnect Wallet" }
                         </button>
                     } else {
                         <button class="disconnect-button" onclick={disconnect_wallet}>
                             <img
-                                src={wallet_info.icon()}
+                                src={solflare_wallet_info.icon()}
                                 alt="Disconnect Wallet"
                                 class="button-icon"
                             />

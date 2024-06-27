@@ -19,16 +19,24 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::{Signature, Signer},
     signer::keypair::Keypair,
+    transaction::Transaction,
 };
 
 use crate::{
+    adapter::{phantom::SOLANA, solflare::SOLFLARE},
     core::{
         error::WalletError,
         traits::{WalletAdapter, WalletAdapterEvents},
         transaction::TransactionOrVersionedTransaction,
     },
-    solana::object::SOLANA,
 };
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub enum Wallet {
+    #[default]
+    Phantom,
+    Solflare,
+}
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum WalletReadyState {
@@ -111,17 +119,30 @@ impl WalletAdapter for BaseWalletAdapter {
         let options = js_sys::Object::new();
         js_sys::Reflect::set(
             &options,
-            &JsValue::from_str("onlyIfTrusted"),
-            &JsValue::from_bool(true),
+            &serde_wasm_bindgen::to_value("onlyIfTrusted").unwrap(),
+            &serde_wasm_bindgen::to_value(&true).unwrap(),
         )
         .unwrap();
-        let promise: Promise = SOLANA.sign_in(&options);
+        let promise: Promise = match self.name().as_ref() {
+            "Phantom" => SOLANA.sign_in(&options),
+            "Solflare" => SOLFLARE.connect(&options),
+            &_ => SOLANA.sign_in(&options),
+        };
+
         let result = JsFuture::from(promise).await;
 
         match result {
-            Ok(_) => {
+            Ok(_response) => {
+                // Todo use response to get pubkey
+                // let response: MessageObject = serde_wasm_bindgen::from_value(response).unwrap();
                 info!("Wallet connected");
-                let key = SOLANA.publicKey();
+
+                let key: JsValue = match self.name().as_ref() {
+                    "Phantom" => SOLANA.publicKey(),
+                    "Solflare" => SOLFLARE.publicKey(),
+                    &_ => SOLANA.publicKey(),
+                };
+
                 if key.is_undefined() {
                     info!("Public key is undefined");
                 } else {
@@ -155,8 +176,11 @@ impl WalletAdapter for BaseWalletAdapter {
         self.public_key = None;
         self.ready_state = WalletReadyState::NotDetected;
         self.emit_disconnect();
-
-        let promise: Promise = SOLANA.disconnect();
+        let promise: Promise = match self.name().as_ref() {
+            "Phantom" => SOLANA.disconnect(),
+            "Solflare" => SOLFLARE.disconnect(),
+            &_ => SOLANA.disconnect(),
+        };
         let result = JsFuture::from(promise).await;
 
         match result {
@@ -200,6 +224,59 @@ impl WalletAdapter for BaseWalletAdapter {
         self.emit_transaction_sent(signature);
         info!("Transaction sent: {}", signature);
         Ok(signature)
+    }
+
+    async fn sign_transaction(
+        &mut self,
+        transaction: Transaction,
+    ) -> Result<Signature, WalletError> {
+        info!("Signing transaction...");
+
+        if self.public_key.is_none() {
+            self.emit_error(WalletError::WalletNotConnectedError);
+            return Err(WalletError::WalletNotConnectedError);
+        }
+
+        let tx_json = serde_json::to_string(&transaction).expect("Failed to serialize transaction");
+
+        let bs58_tx = bs58::encode(tx_json.as_bytes()).into_string();
+
+        let options = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &options,
+            &serde_wasm_bindgen::to_value("method").unwrap(),
+            &serde_wasm_bindgen::to_value("signTransaction").unwrap(),
+        )
+        .expect("Failed to set method in options");
+
+        let params = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &params,
+            &serde_wasm_bindgen::to_value("message").unwrap(),
+            &serde_wasm_bindgen::to_value(&bs58_tx).unwrap(),
+        )
+        .expect("Failed to set message in params");
+
+        js_sys::Reflect::set(
+            &options,
+            &serde_wasm_bindgen::to_value("params").unwrap(),
+            &JsValue::from(&params),
+        )
+        .expect("Failed to set params in options");
+
+        let promise: Promise = SOLANA.request(&options);
+        let result = JsFuture::from(promise).await;
+
+        match result {
+            Ok(sig) => {
+                info!("Transaction signed: {:?}", sig);
+                Ok(serde_wasm_bindgen::from_value(sig).unwrap())
+            }
+            Err(err) => {
+                log::error!("Failed to sign transaction: {:?}", err);
+                Err(WalletError::WalletSignTransactionError)
+            }
+        }
     }
 
     async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String {
