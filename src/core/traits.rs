@@ -41,6 +41,7 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
     async fn sign_transaction(
         &mut self,
         transaction: Transaction,
+        public_key: Pubkey,
     ) -> Result<Signature, WalletError>;
     async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String;
 }

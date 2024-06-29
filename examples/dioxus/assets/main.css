@@ -29,74 +29,53 @@ body {
     margin-bottom: 20px;
 }
 
-
 .buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr;
     justify-content: center;
+    align-items: center;
     gap: 20px;
     margin-top: 20px;
+    margin-bottom: 20px;
 }
 
-.connect-button-phantom, .connect-button-solflare {
+
+button {
+    background-color: #000;
+    color: #ffffff;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
     display: flex;
-    background-color: #a033ff;
     align-items: center;
     justify-content: center;
-    color: #fff;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+    gap: 10px;
+    transition: background-color 0.3s;
 }
 
-.connect-button-solflare {
-    background-color: #241e2a;
+button:hover {
+    background-color: #3700b3;
 }
 
-.connect-button-phantom:hover, .connect-button-solflare:hover {
-    box-shadow: 0 0 10px rgba(160, 51, 255, 0.6);
-}
-
-.disconnect-button {
-    display: flex;
-    background-color: #e84855;
-    color: #fff;
-    align-items: center;
-    justify-content: center;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
-}
-
-
-.connect-button-solflare img,
-.connect-button-phantom img,
-.disconnect-button img {
+button img {
     width: 24px;
-    margin-right: 10px;
+    height: 24px;
 }
 
-.connect-button-solflare:hover,
-.connect-button-phantom:hover,
-.disconnect-button:hover {
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+button.disconnect {
+    background-color: #b00020;
 }
 
-.disconnect-button:hover {
-    box-shadow: 0 0 10px rgba(232, 72, 85, 0.6);
+button.disconnect:hover {
+    background-color: #7f0000;
 }
 
+.error-message {
+    color: red;
+    font-size: 14px;
+}
 
 footer {
     margin-top: 20px;

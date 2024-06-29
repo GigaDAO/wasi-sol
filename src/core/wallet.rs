@@ -23,7 +23,7 @@ use solana_sdk::{
 };
 
 use crate::{
-    adapter::{phantom::SOLANA, solflare::SOLFLARE},
+    adapter::{backpack::BACKPACK, phantom::SOLANA, solflare::SOLFLARE},
     core::{
         error::WalletError,
         traits::{WalletAdapter, WalletAdapterEvents},
@@ -36,6 +36,7 @@ pub enum Wallet {
     #[default]
     Phantom,
     Solflare,
+    Backpack,
 }
 
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
@@ -48,7 +49,7 @@ pub enum WalletReadyState {
 
 #[derive(Clone, PartialEq)]
 pub struct BaseWalletAdapter {
-    name: String,
+    name: Wallet,
     url: String,
     icon: String,
     ready_state: WalletReadyState,
@@ -58,7 +59,7 @@ pub struct BaseWalletAdapter {
 }
 
 impl BaseWalletAdapter {
-    pub fn new(name: &str, url: &str, icon: &str) -> Self {
+    pub fn new(name: Wallet, url: &str, icon: &str) -> Self {
         let ready_state = if cfg!(target_arch = "wasm32") {
             WalletReadyState::Unsupported
         } else {
@@ -67,7 +68,7 @@ impl BaseWalletAdapter {
 
         BaseWalletAdapter {
             ready_state,
-            name: name.to_string(),
+            name,
             url: url.to_string(),
             icon: icon.to_string(),
             public_key: None,
@@ -79,7 +80,7 @@ impl BaseWalletAdapter {
 
 impl WalletAdapter for BaseWalletAdapter {
     fn name(&self) -> String {
-        self.name.to_string()
+        format!("{:?}", self.name).to_string()
     }
 
     fn url(&self) -> String {
@@ -123,10 +124,11 @@ impl WalletAdapter for BaseWalletAdapter {
             &serde_wasm_bindgen::to_value(&true).unwrap(),
         )
         .unwrap();
-        let promise: Promise = match self.name().as_ref() {
-            "Phantom" => SOLANA.sign_in(&options),
-            "Solflare" => SOLFLARE.connect(&options),
-            &_ => SOLANA.sign_in(&options),
+
+        let promise: Promise = match self.name {
+            Wallet::Phantom => SOLANA.sign_in(&options),
+            Wallet::Solflare => SOLFLARE.connect(&options),
+            Wallet::Backpack => BACKPACK.sign_in(&options),
         };
 
         let result = JsFuture::from(promise).await;
@@ -137,10 +139,10 @@ impl WalletAdapter for BaseWalletAdapter {
                 // let response: MessageObject = serde_wasm_bindgen::from_value(response).unwrap();
                 info!("Wallet connected");
 
-                let key: JsValue = match self.name().as_ref() {
-                    "Phantom" => SOLANA.publicKey(),
-                    "Solflare" => SOLFLARE.publicKey(),
-                    &_ => SOLANA.publicKey(),
+                let key: JsValue = match self.name {
+                    Wallet::Phantom => SOLANA.publicKey(),
+                    Wallet::Solflare => SOLFLARE.publicKey(),
+                    Wallet::Backpack => BACKPACK.publicKey(),
                 };
 
                 if key.is_undefined() {
@@ -176,10 +178,10 @@ impl WalletAdapter for BaseWalletAdapter {
         self.public_key = None;
         self.ready_state = WalletReadyState::NotDetected;
         self.emit_disconnect();
-        let promise: Promise = match self.name().as_ref() {
-            "Phantom" => SOLANA.disconnect(),
-            "Solflare" => SOLFLARE.disconnect(),
-            &_ => SOLANA.disconnect(),
+        let promise: Promise = match self.name {
+            Wallet::Phantom => SOLANA.disconnect(),
+            Wallet::Solflare => SOLFLARE.disconnect(),
+            Wallet::Backpack => BACKPACK.disconnect(),
         };
         let result = JsFuture::from(promise).await;
 
@@ -229,6 +231,7 @@ impl WalletAdapter for BaseWalletAdapter {
     async fn sign_transaction(
         &mut self,
         transaction: Transaction,
+        public_key: Pubkey,
     ) -> Result<Signature, WalletError> {
         info!("Signing transaction...");
 
@@ -264,7 +267,17 @@ impl WalletAdapter for BaseWalletAdapter {
         )
         .expect("Failed to set params in options");
 
-        let promise: Promise = SOLANA.request(&options);
+        let promise: Promise = match self.name {
+            Wallet::Phantom => SOLANA.request(&options),
+            Wallet::Backpack => BACKPACK.sign_transaction(
+                &JsValue::from(&tx_json),
+                &JsValue::from(public_key),
+                &JsValue::from(""),
+                &JsValue::from("uuid"),
+            ),
+            _ => SOLANA.request(&options),
+        };
+
         let result = JsFuture::from(promise).await;
 
         match result {

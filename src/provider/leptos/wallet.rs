@@ -25,10 +25,8 @@ pub fn WalletProvider(
 
     let wallet_context = create_memo(move |_| wallets.clone());
 
-    let (context, _set_context) = create_signal(wallet_context.get_untracked());
-
     view! {
-        <Provider<Wallets> value={Wallets { wallets: context.get_untracked()}}>
+        <Provider<Wallets> value={Wallets { wallets: wallet_context.get_untracked()}}>
            {children()}
         </Provider<Wallets>>
     }

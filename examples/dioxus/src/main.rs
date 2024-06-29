@@ -6,6 +6,7 @@ use wasi_sol::{
         connection::ConnectionProvider,
         wallet::{use_wallet, WalletProvider},
     },
+    forms::dioxus::login::LoginForm
 };
 
 fn main() {
@@ -17,8 +18,9 @@ fn main() {
 fn app() -> Element {
     let endpoint = "https://api.mainnet-beta.solana.com";
     let wallets = vec![
-        BaseWalletAdapter::new("Solflare", "https://solflare.com", "./solflare_logo.png"),
-        BaseWalletAdapter::new("Phantom", "https://phantom.app", "./phantom_logo.png"),
+        BaseWalletAdapter::new(Wallet::Solflare, "https://solflare.com", "./solflare_logo.png"),
+        BaseWalletAdapter::new(Wallet::Phantom, "https://phantom.app", "./phantom_logo.png"),
+        BaseWalletAdapter::new(Wallet::Backpack, "https://backpack.app", "./backpack_logo.png"),
     ];
 
     rsx! {
@@ -36,74 +38,13 @@ fn app() -> Element {
 fn LoginPage() -> Element {
     let phantom_context = use_wallet(Wallet::Phantom);
     let solflare_context = use_wallet(Wallet::Solflare);
+    let backpack_context = use_wallet(Wallet::Backpack);
     let phantom_wallet_adapter = use_signal(|| phantom_context);
     let solflare_wallet_adapter = use_signal(|| solflare_context);
-    let mut connected = use_signal(|| false);
+    let backpack_wallet_adapter = use_signal(|| backpack_context);
+    let connected = use_signal(|| false);
     let phantom_wallet_info = (*phantom_wallet_adapter)().clone();
     let solflare_wallet_info = (*solflare_wallet_adapter)().clone();
-    let error = use_signal(|| None as Option<String>);
-
-    let connect_wallet_phantom = move |_| {
-        let mut phantom_wallet_adapter = phantom_wallet_adapter.clone();
-
-        spawn(async move {
-            let mut phantom_wallet_info = (*phantom_wallet_adapter)().clone();
-
-            match phantom_wallet_info.connect().await {
-                Ok(_) => {
-                    phantom_wallet_adapter.set(phantom_wallet_info);
-                    connected.set(true);
-                }
-                Err(err) => {
-                    log::error!("Failed to connect wallet: {}", err);
-                }
-            }
-        });
-    };
-
-    let connect_wallet_solflare = move |_| {
-        let mut solflare_wallet_adapter = solflare_wallet_adapter.clone();
-
-        spawn(async move {
-            let mut solflare_wallet_info = (*solflare_wallet_adapter)().clone();
-
-            match solflare_wallet_info.connect().await {
-                Ok(_) => {
-                    solflare_wallet_adapter.set(solflare_wallet_info);
-                    connected.set(true);
-                }
-                Err(err) => {
-                    log::error!("Failed to connect wallet: {}", err);
-                }
-            }
-        });
-    };
-
-    let disconnect_wallet = move |_| {
-        let mut phantom_wallet_adapter = phantom_wallet_adapter.clone();
-        let mut solflare_wallet_adapter = solflare_wallet_adapter.clone();
-
-        spawn(async move {
-            let mut phantom_wallet_info = (*phantom_wallet_adapter)().clone();
-            let mut solflare_wallet_info = (*solflare_wallet_adapter)().clone();
-
-            match phantom_wallet_info.disconnect().await {
-                Ok(_) => {
-                    phantom_wallet_adapter.set(phantom_wallet_info);
-                    connected.set(false);
-                }
-                Err(_err) => {}
-            }
-
-            match solflare_wallet_info.disconnect().await {
-                Ok(_) => {
-                    solflare_wallet_adapter.set(solflare_wallet_info);
-                    connected.set(false);
-                }
-                Err(_err) => {}
-            }
-        });
-    };
 
     rsx! {
         div {
@@ -133,60 +74,13 @@ fn LoginPage() -> Element {
                         }
                     }
                 },
-                div {
-                    class: "buttons",
-                    if !(*connected)() {
-                        button {
-                            class: "connect-button-phantom",
-                            onclick: connect_wallet_phantom,
-                            img {
-                                src: phantom_wallet_info.icon(),
-                                alt: "Phantom Wallet",
-                                class: "button-icon-phantom"
-                            },
-                            "Connect Wallet"
-                        }
-                        button {
-                            class: "connect-button-solflare",
-                            onclick: connect_wallet_solflare,
-                            img {
-                                src: solflare_wallet_info.icon(),
-                                alt: "Solflare Wallet",
-                                class: "button-icon-solflare"
-                            },
-                            "Connect Wallet"
-                        }
-                    } else if let Some(ref _key) = phantom_wallet_info.public_key() {
-                        button {
-                            class: "disconnect-button",
-                            onclick: disconnect_wallet,
-                            img {
-                                src: phantom_wallet_info.icon(),
-                                alt: "Disconnect Wallet",
-                                class: "button-icon"
-                            },
-                            "Disconnect Wallet"
-                        }
-                        } else if let Some(ref _key) = solflare_wallet_info.public_key() {
-                        button {
-                            class: "disconnect-button",
-                            onclick: disconnect_wallet,
-                            img {
-                                src: solflare_wallet_info.icon(),
-                                alt: "Disconnect Wallet",
-                                class: "button-icon"
-                            },
-                            "Disconnect Wallet"
-                        }
-                        },
-                    if let Some(ref e) = (*error)() {
-                        p {
-                            style: "color: red;",
-                            { e.clone() }
-                        }
-                    }
-                },
             },
+            LoginForm {
+                phantom: phantom_wallet_adapter,
+                solflare: solflare_wallet_adapter,
+                backpack: backpack_wallet_adapter,
+                connected: connected
+            }
             footer {
                 class: "footer",
                 p { "2024 GigaDAO Foundation." }

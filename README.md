@@ -2,6 +2,8 @@
 
 # 🦀 Wasi Sol
 
+![wasi-sol-logo](https://github.com/GigaDAO/wasi-sol/assets/62179149/faac3b2c-4c6e-41e9-87f9-34506f3b21bd)
+
 [![made-with-rust](https://img.shields.io/badge/Made%20with-Rust-1f425f.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://wasi-sol.netlify.app/)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/15f88b9f-edfd-4e94-9bca-2150b95343ca/deploy-status)](https://wasi-sol-dio.netlify.app)
@@ -12,6 +14,8 @@
 [![Crates.io Downloads](https://img.shields.io/crates/d/wasi-sol)](https://crates.io/crates/wasi-sol)
 [![docs](https://docs.rs/wasi-sol/badge.svg)](https://docs.rs/wasi-sol/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://github.com/codespaces/new?hide_repo_select=true&amp%3Bref=main&amp%3Brepo=816037127&skip_quickstart=true&repo=816037127&machine=basicLinux32gb&ref=main&geo=EuropeWest)
 
 [![GigaDAO Discord](https://dcbadge.limes.pink/api/server/gigadao-gigadex-now-live-920188005686337566)](https://discord.gg/gigadao-gigadex-now-live-920188005686337566)
 
