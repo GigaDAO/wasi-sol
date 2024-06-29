@@ -35,6 +35,7 @@ A Solana Wallet adapter for WASM frameworks.
 |-----------|-------------|-------------------|
 | Phantom   | ✅          | All               |
 | Solflare  | ✅          | All               |
+| Backpack  | ✅          | All               |
 
 ## 🌐 Wasm Frameworks Support
 
