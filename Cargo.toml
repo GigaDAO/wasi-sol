@@ -1,6 +1,6 @@
 [package]
 name = "wasi-sol"
-version = "0.0.5"
+version = "0.0.6"
 edition = "2021"
 description = "🔒 A Solana Wallet adapter for WASM frameworks."
 license = "MIT"
@@ -10,7 +10,7 @@ repository = "https://github.com/gigadao/wasi-sol"
 documentation = "https://docs.rs/wasi-sol"
 authors = [
 	"GigaDAO Core Maintainers",
-	"Mahmoud Harmouch oss@wiseai.dev",
+	"Mahmoud Harmouch <oss@wiseai.dev>",
 ]
 exclude = ["examples"]
 
