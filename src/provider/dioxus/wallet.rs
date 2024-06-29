@@ -26,9 +26,7 @@ pub fn WalletProvider(props: WalletProviderProps) -> Element {
 
     let wallet_context = use_memo(move || props.wallets.clone());
 
-    let context = use_signal(move || (*wallet_context)().clone());
-
-    use_context_provider(|| context());
+    use_context_provider(|| (*wallet_context)().clone());
 
     rsx! { { &props.children } }
 }

@@ -3,6 +3,7 @@
 
 pub(crate) mod adapter;
 pub mod core;
+pub mod forms;
 pub mod provider;
 
 // re-export

@@ -29,10 +29,8 @@ pub fn WalletProvider(props: &WalletProviderProps) -> Html {
         props.wallets.clone()
     });
 
-    let context = use_state(|| (*wallet_context).clone());
-
     html! {
-        <ContextProvider<Vec<BaseWalletAdapter>> context={(*context).clone()}>
+        <ContextProvider<Vec<BaseWalletAdapter>> context={(*wallet_context).clone()}>
             { props.children.clone() }
         </ContextProvider<Vec<BaseWalletAdapter>>>
     }
