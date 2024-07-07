@@ -2,34 +2,99 @@
 
 use std::str::FromStr;
 
-use js_sys::Promise;
+use anyhow::Result;
+use emitter_rs::EventEmitter;
+use js_sys::{Promise, Uint8Array};
+use log::info;
+use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use wasm_bindgen::JsValue;
 use wasm_bindgen_futures::JsFuture;
-
-use emitter_rs::EventEmitter;
-use log::info;
-use serde::{Deserialize, Serialize};
-
-use anyhow::Result;
+use web_sys::window;
 
 use solana_client_wasm::WasmClient as RpcClient;
-use solana_sdk::{
-    bs58,
-    pubkey::Pubkey,
-    signature::{Signature, Signer},
-    signer::keypair::Keypair,
-    transaction::Transaction,
-};
+use solana_sdk::{bs58, pubkey::Pubkey, signature::Signature, transaction::Transaction};
 
 use crate::{
-    adapter::{backpack::BACKPACK, phantom::SOLANA, solflare::SOLFLARE},
+    adapter::{
+        backpack::{BACKPACK, XNFT},
+        phantom::SOLANA,
+        solflare::SOLFLARE,
+    },
     core::{
         error::WalletError,
+        response::{JsSignatureObject, JsSignatureResponse, SignaturesObject},
         traits::{WalletAdapter, WalletAdapterEvents},
         transaction::TransactionOrVersionedTransaction,
     },
 };
+
+#[derive(Debug, Serialize)]
+struct SerializableTransaction {
+    signatures: Vec<String>,
+    message: SerializableMessage,
+}
+
+#[derive(Debug, Serialize)]
+struct SerializableMessage {
+    header: MessageHeader,
+    account_keys: Vec<String>,
+    recent_blockhash: String,
+    instructions: Vec<SerializableInstruction>,
+}
+
+#[derive(Debug, Serialize)]
+struct MessageHeader {
+    num_required_signatures: u8,
+    num_readonly_signed_accounts: u8,
+    num_readonly_unsigned_accounts: u8,
+}
+
+#[derive(Debug, Serialize)]
+struct SerializableInstruction {
+    program_id_index: u8,
+    accounts: Vec<u8>,
+    data: Vec<u8>,
+}
+
+impl From<Transaction> for SerializableTransaction {
+    fn from(tx: Transaction) -> Self {
+        SerializableTransaction {
+            signatures: tx
+                .signatures
+                .iter()
+                .map(|sig| bs58::encode(sig.as_ref()).into_string())
+                .collect(),
+            message: SerializableMessage {
+                header: MessageHeader {
+                    num_required_signatures: tx.message.header.num_required_signatures,
+                    num_readonly_signed_accounts: tx.message.header.num_readonly_signed_accounts,
+                    num_readonly_unsigned_accounts: tx
+                        .message
+                        .header
+                        .num_readonly_unsigned_accounts,
+                },
+                account_keys: tx
+                    .message
+                    .account_keys
+                    .iter()
+                    .map(|key| key.to_string())
+                    .collect(),
+                recent_blockhash: tx.message.recent_blockhash.to_string(),
+                instructions: tx
+                    .message
+                    .instructions
+                    .iter()
+                    .map(|ix| SerializableInstruction {
+                        program_id_index: ix.program_id_index,
+                        accounts: ix.accounts.clone(),
+                        data: ix.data.clone(),
+                    })
+                    .collect(),
+            },
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub enum Wallet {
@@ -39,15 +104,38 @@ pub enum Wallet {
     Backpack,
 }
 
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+impl Into<BaseWalletAdapter> for Wallet {
+    fn into(self) -> BaseWalletAdapter {
+        match self {
+            Wallet::Phantom => BaseWalletAdapter::new(
+                Wallet::Phantom,
+                "https://phantom.app",
+                "images/phantom_logo.png",
+            ),
+            Wallet::Solflare => BaseWalletAdapter::new(
+                Wallet::Solflare,
+                "https://solflare.com",
+                "images/solflare_logo.png",
+            ),
+            Wallet::Backpack => BaseWalletAdapter::new(
+                Wallet::Backpack,
+                "https://backpack.app",
+                "images/backpack_logo.png",
+            ),
+        }
+    }
+}
+
+#[derive(Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum WalletReadyState {
     Installed,
+    #[default]
     NotDetected,
     Loadable,
     Unsupported,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Default, Clone, PartialEq)]
 pub struct BaseWalletAdapter {
     name: Wallet,
     url: String,
@@ -103,11 +191,11 @@ impl WalletAdapter for BaseWalletAdapter {
         self.connecting
     }
 
-    async fn auto_connect(&mut self) -> Result<(), WalletError> {
+    async fn auto_connect(&mut self) -> Result<bool, WalletError> {
         self.connect().await
     }
 
-    async fn connect(&mut self) -> Result<(), WalletError> {
+    async fn connect(&mut self) -> Result<bool, WalletError> {
         info!("Connecting to wallet...");
 
         if self.connecting {
@@ -125,46 +213,54 @@ impl WalletAdapter for BaseWalletAdapter {
         )
         .unwrap();
 
-        let promise: Promise = match self.name {
-            Wallet::Phantom => SOLANA.sign_in(&options),
-            Wallet::Solflare => SOLFLARE.connect(&options),
-            Wallet::Backpack => BACKPACK.sign_in(&options),
+        let promise: Option<Promise> = match self.name {
+            Wallet::Phantom if !SOLANA.is_undefined() => Some(SOLANA.sign_in(&options)),
+            Wallet::Solflare if !SOLFLARE.is_undefined() => Some(SOLFLARE.connect(&options)),
+            Wallet::Backpack if !XNFT.is_undefined() => Some(BACKPACK.sign_in(&options)),
+            Wallet::Phantom | Wallet::Solflare | Wallet::Backpack => None,
         };
 
-        let result = JsFuture::from(promise).await;
+        if promise.is_some() {
+            let result = JsFuture::from(promise.unwrap()).await;
 
-        match result {
-            Ok(_response) => {
-                // Todo use response to get pubkey
-                // let response: MessageObject = serde_wasm_bindgen::from_value(response).unwrap();
-                info!("Wallet connected");
+            match result {
+                Ok(_response) => {
+                    // Todo use response to get pubkey
+                    // let response: MessageObject = serde_wasm_bindgen::from_value(response).unwrap();
+                    info!("Wallet connected");
 
-                let key: JsValue = match self.name {
-                    Wallet::Phantom => SOLANA.publicKey(),
-                    Wallet::Solflare => SOLFLARE.publicKey(),
-                    Wallet::Backpack => BACKPACK.publicKey(),
-                };
+                    let key: JsValue = match self.name {
+                        Wallet::Phantom => SOLANA.publicKey(),
+                        Wallet::Solflare => SOLFLARE.publicKey(),
+                        Wallet::Backpack => BACKPACK.publicKey(),
+                    };
 
-                if key.is_undefined() {
-                    info!("Public key is undefined");
-                } else {
-                    let key_str: String = JsValue::into_serde(&key).unwrap();
+                    if key.is_undefined() {
+                        info!("Public key is undefined");
+                    } else {
+                        let key_str: String = JsValue::into_serde(&key).unwrap();
 
-                    let public_key = Pubkey::from_str(&key_str).unwrap();
-                    info!("Connected to wallet with public key: {:?}", public_key);
-                    self.public_key = Some(public_key);
-                    self.ready_state = WalletReadyState::Installed;
-                    self.emit_connect(public_key);
+                        let public_key = Pubkey::from_str(&key_str).unwrap();
+                        info!("Connected to wallet with public key: {:?}", public_key);
+                        self.public_key = Some(public_key);
+                        self.ready_state = WalletReadyState::Installed;
+                        self.emit_connect(public_key);
 
-                    self.connecting = false;
+                        self.connecting = false;
+                    }
+                }
+                Err(err) => {
+                    log::error!("Failed to connect wallet: {:?}", err);
                 }
             }
-            Err(err) => {
-                log::error!("Failed to connect wallet: {:?}", err);
-            }
+        } else {
+            let window = window().expect("no global `window` exists");
+            window
+                .open_with_url(&self.url)
+                .expect("failed to open a new tab");
         }
 
-        Ok(())
+        Ok(!self.connecting)
     }
 
     async fn disconnect(&mut self) -> Result<(), WalletError> {
@@ -231,7 +327,6 @@ impl WalletAdapter for BaseWalletAdapter {
     async fn sign_transaction(
         &mut self,
         transaction: Transaction,
-        public_key: Pubkey,
     ) -> Result<Signature, WalletError> {
         info!("Signing transaction...");
 
@@ -240,9 +335,12 @@ impl WalletAdapter for BaseWalletAdapter {
             return Err(WalletError::WalletNotConnectedError);
         }
 
-        let tx_json = serde_json::to_string(&transaction).expect("Failed to serialize transaction");
+        let transaction_bytes = bincode::serialize(&transaction)
+            .map_err(|_| WalletError::WalletSignTransactionError)?;
 
-        let bs58_tx = bs58::encode(tx_json.as_bytes()).into_string();
+        let transaction_js_array = Uint8Array::from(&transaction_bytes[..]);
+
+        let bs58_tx = bs58::encode(transaction_bytes).into_string();
 
         let options = js_sys::Object::new();
         js_sys::Reflect::set(
@@ -270,8 +368,8 @@ impl WalletAdapter for BaseWalletAdapter {
         let promise: Promise = match self.name {
             Wallet::Phantom => SOLANA.request(&options),
             Wallet::Backpack => BACKPACK.sign_transaction(
-                &JsValue::from(&tx_json),
-                &JsValue::from(public_key),
+                &transaction_js_array,
+                &JsValue::from(self.public_key),
                 &JsValue::from(""),
                 &JsValue::from("uuid"),
             ),
@@ -281,9 +379,20 @@ impl WalletAdapter for BaseWalletAdapter {
         let result = JsFuture::from(promise).await;
 
         match result {
-            Ok(sig) => {
-                info!("Transaction signed: {:?}", sig);
-                Ok(serde_wasm_bindgen::from_value(sig).unwrap())
+            Ok(json_str) => {
+                let deserialized: SignaturesObject = JsValue::into_serde(&json_str).unwrap();
+
+                let signature_map = &deserialized.signatures[0].signature;
+                let mut signature_bytes = [0u8; 64];
+
+                for (key, value) in signature_map.iter() {
+                    let index: usize = key.parse().unwrap();
+                    signature_bytes[index] = value.as_u64().unwrap() as u8;
+                }
+
+                let signature = Signature::new(&signature_bytes);
+                info!("Got signature: {:?}", signature);
+                Ok(signature)
             }
             Err(err) => {
                 log::error!("Failed to sign transaction: {:?}", err);
@@ -292,12 +401,102 @@ impl WalletAdapter for BaseWalletAdapter {
         }
     }
 
-    async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String {
-        let message_bytes = message.as_bytes();
+    async fn sign_send_transaction(
+        &mut self,
+        transaction: Transaction,
+    ) -> Result<Signature, WalletError> {
+        info!("Signing and sending transaction...");
 
-        let signature = keypair.sign_message(message_bytes);
+        if self.public_key.is_none() {
+            self.emit_error(WalletError::WalletNotConnectedError);
+            return Err(WalletError::WalletNotConnectedError);
+        }
 
-        bs58::encode(signature).into_string()
+        let transaction_bytes = bincode::serialize(&transaction)
+            .map_err(|_| WalletError::WalletSignTransactionError)?;
+
+        let transaction_js_array = Uint8Array::from(&transaction_bytes[..]);
+
+        let bs58_tx = bs58::encode(transaction_bytes).into_string();
+
+        let options = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &options,
+            &serde_wasm_bindgen::to_value("method").unwrap(),
+            &serde_wasm_bindgen::to_value("signAndSendTransaction").unwrap(),
+        )
+        .expect("Failed to set method in options");
+
+        let params = js_sys::Object::new();
+        js_sys::Reflect::set(
+            &params,
+            &serde_wasm_bindgen::to_value("message").unwrap(),
+            &serde_wasm_bindgen::to_value(&bs58_tx).unwrap(),
+        )
+        .expect("Failed to set message in params");
+
+        js_sys::Reflect::set(
+            &options,
+            &serde_wasm_bindgen::to_value("params").unwrap(),
+            &JsValue::from(&params),
+        )
+        .expect("Failed to set params in options");
+
+        let promise: Promise = match self.name {
+            Wallet::Phantom => SOLANA.request(&options),
+            Wallet::Backpack => BACKPACK.sign_and_send_transaction(&transaction_js_array, &options),
+            _ => SOLANA.request(&options),
+        };
+
+        let result = JsFuture::from(promise).await;
+
+        match result {
+            Ok(json_str) => {
+                let deserialized: JsSignatureObject = JsValue::into_serde(&json_str).unwrap();
+
+                let signature_bytes = bs58::decode(&deserialized.signature).into_vec().unwrap();
+                let signature = Signature::new(&signature_bytes);
+                info!("Got signature: {:?}", signature);
+
+                Ok(signature)
+            }
+            Err(err) => {
+                log::error!("Failed to sign transaction: {:?}", err);
+                Err(WalletError::WalletSignTransactionError)
+            }
+        }
+    }
+
+    async fn sign_message(&mut self, message: &str) -> Result<Signature, WalletError> {
+        info!("Signing transaction...");
+
+        if self.public_key.is_none() {
+            return Err(WalletError::WalletNotConnectedError);
+        }
+
+        let transaction_bytes =
+            bincode::serialize(&message).map_err(|_| WalletError::WalletSignTransactionError)?;
+
+        let transaction_js_array = Uint8Array::from(&transaction_bytes[..]);
+
+        let promise: Promise = SOLANA.sign_message(&transaction_js_array);
+        let result = JsFuture::from(promise).await;
+
+        match result {
+            Ok(json_str) => {
+                let sig_obj: JsSignatureResponse = JsValue::into_serde(&json_str).unwrap();
+                let data = sig_obj.signature.data;
+
+                let signature = Signature::new(&data);
+                info!("Transaction signed: {:?}", signature);
+
+                Ok(signature)
+            }
+            Err(err) => {
+                log::error!("Failed to sign transaction: {:?}", err);
+                Err(WalletError::WalletSignTransactionError)
+            }
+        }
     }
 }
 

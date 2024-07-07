@@ -3,9 +3,7 @@
 use anyhow::Result;
 
 use solana_client_wasm::WasmClient as RpcClient;
-use solana_sdk::{
-    pubkey::Pubkey, signature::Signature, signer::keypair::Keypair, transaction::Transaction,
-};
+use solana_sdk::{pubkey::Pubkey, signature::Signature, transaction::Transaction};
 use std::sync::Arc;
 
 use crate::core::{
@@ -30,8 +28,8 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
     fn connected(&self) -> bool {
         self.public_key().is_some()
     }
-    async fn auto_connect(&mut self) -> Result<(), WalletError>;
-    async fn connect(&mut self) -> Result<(), WalletError>;
+    async fn auto_connect(&mut self) -> Result<bool, WalletError>;
+    async fn connect(&mut self) -> Result<bool, WalletError>;
     async fn disconnect(&mut self) -> Result<(), WalletError>;
     async fn send_transaction(
         &mut self,
@@ -41,9 +39,12 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
     async fn sign_transaction(
         &mut self,
         transaction: Transaction,
-        public_key: Pubkey,
     ) -> Result<Signature, WalletError>;
-    async fn sign_message(&mut self, keypair: Keypair, message: &str) -> String;
+    async fn sign_send_transaction(
+        &mut self,
+        transaction: Transaction,
+    ) -> Result<Signature, WalletError>;
+    async fn sign_message(&mut self, message: &str) -> Result<Signature, WalletError>;
 }
 
 pub trait SignerWalletAdapter: WalletAdapter {
