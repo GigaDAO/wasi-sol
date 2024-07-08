@@ -30,7 +30,7 @@ pub trait WalletAdapter: WalletAdapterEvents + Send + Sync {
     }
     async fn auto_connect(&mut self) -> Result<bool, WalletError>;
     async fn connect(&mut self) -> Result<bool, WalletError>;
-    async fn disconnect(&mut self) -> Result<(), WalletError>;
+    async fn disconnect(&mut self) -> Result<bool, WalletError>;
     async fn send_transaction(
         &mut self,
         client: Arc<RpcClient>,

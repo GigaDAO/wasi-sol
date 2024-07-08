@@ -37,7 +37,7 @@ extern "C" {
     pub fn sign_transaction(this: &Solflare, transaction: &JsValue) -> Promise;
 
     #[wasm_bindgen(method, js_name = signMessage)]
-    pub fn sign_message(this: &Solflare, message: &JsValue, options: &JsValue) -> Promise;
+    pub fn sign_message(this: &Solflare, message: &JsValue) -> Promise;
 
     #[wasm_bindgen(method, js_name = signAllTransactions)]
     pub fn sign_all_transactions(this: &Solflare, transactions: &JsValue) -> Promise;

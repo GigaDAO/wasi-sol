@@ -31,8 +31,10 @@ pub fn WalletProvider(
         </Provider<Wallets>>
     }
 }
-
-pub fn use_wallet(wallet_name: Wallet) -> BaseWalletAdapter {
+pub fn use_wallet<W>(wallet_name: W) -> BaseWalletAdapter
+where
+    W: Into<BaseWalletAdapter> + std::fmt::Debug,
+{
     let wallets = use_context::<Wallets>().expect("No WalletContext found");
     let (_wallet_name, _set_wallet_name) = use_local_storage(
         "walletName".to_string(),

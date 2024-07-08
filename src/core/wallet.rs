@@ -29,73 +29,6 @@ use crate::{
     },
 };
 
-#[derive(Debug, Serialize)]
-struct SerializableTransaction {
-    signatures: Vec<String>,
-    message: SerializableMessage,
-}
-
-#[derive(Debug, Serialize)]
-struct SerializableMessage {
-    header: MessageHeader,
-    account_keys: Vec<String>,
-    recent_blockhash: String,
-    instructions: Vec<SerializableInstruction>,
-}
-
-#[derive(Debug, Serialize)]
-struct MessageHeader {
-    num_required_signatures: u8,
-    num_readonly_signed_accounts: u8,
-    num_readonly_unsigned_accounts: u8,
-}
-
-#[derive(Debug, Serialize)]
-struct SerializableInstruction {
-    program_id_index: u8,
-    accounts: Vec<u8>,
-    data: Vec<u8>,
-}
-
-impl From<Transaction> for SerializableTransaction {
-    fn from(tx: Transaction) -> Self {
-        SerializableTransaction {
-            signatures: tx
-                .signatures
-                .iter()
-                .map(|sig| bs58::encode(sig.as_ref()).into_string())
-                .collect(),
-            message: SerializableMessage {
-                header: MessageHeader {
-                    num_required_signatures: tx.message.header.num_required_signatures,
-                    num_readonly_signed_accounts: tx.message.header.num_readonly_signed_accounts,
-                    num_readonly_unsigned_accounts: tx
-                        .message
-                        .header
-                        .num_readonly_unsigned_accounts,
-                },
-                account_keys: tx
-                    .message
-                    .account_keys
-                    .iter()
-                    .map(|key| key.to_string())
-                    .collect(),
-                recent_blockhash: tx.message.recent_blockhash.to_string(),
-                instructions: tx
-                    .message
-                    .instructions
-                    .iter()
-                    .map(|ix| SerializableInstruction {
-                        program_id_index: ix.program_id_index,
-                        accounts: ix.accounts.clone(),
-                        data: ix.data.clone(),
-                    })
-                    .collect(),
-            },
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Default)]
 pub enum Wallet {
     #[default]
@@ -263,8 +196,9 @@ impl WalletAdapter for BaseWalletAdapter {
         Ok(!self.connecting)
     }
 
-    async fn disconnect(&mut self) -> Result<(), WalletError> {
+    async fn disconnect(&mut self) -> Result<bool, WalletError> {
         info!("Disconnecting from wallet...");
+        let mut confirmed = false;
 
         if self.public_key.is_none() {
             self.emit_error(WalletError::WalletDisconnectedError);
@@ -283,6 +217,7 @@ impl WalletAdapter for BaseWalletAdapter {
 
         match result {
             Ok(_) => {
+                confirmed = true;
                 info!("Disconnected from wallet");
             }
             Err(err) => {
@@ -290,7 +225,7 @@ impl WalletAdapter for BaseWalletAdapter {
             }
         }
 
-        Ok(())
+        Ok(confirmed)
     }
 
     async fn send_transaction(
@@ -367,13 +302,13 @@ impl WalletAdapter for BaseWalletAdapter {
 
         let promise: Promise = match self.name {
             Wallet::Phantom => SOLANA.request(&options),
+            Wallet::Solflare => SOLFLARE.request(&options),
             Wallet::Backpack => BACKPACK.sign_transaction(
                 &transaction_js_array,
-                &JsValue::from(self.public_key),
+                &JsValue::from(self.public_key.unwrap()),
                 &JsValue::from(""),
                 &JsValue::from("uuid"),
             ),
-            _ => SOLANA.request(&options),
         };
 
         let result = JsFuture::from(promise).await;
@@ -444,8 +379,8 @@ impl WalletAdapter for BaseWalletAdapter {
 
         let promise: Promise = match self.name {
             Wallet::Phantom => SOLANA.request(&options),
+            Wallet::Solflare => SOLFLARE.request(&options),
             Wallet::Backpack => BACKPACK.sign_and_send_transaction(&transaction_js_array, &options),
-            _ => SOLANA.request(&options),
         };
 
         let result = JsFuture::from(promise).await;
@@ -454,8 +389,7 @@ impl WalletAdapter for BaseWalletAdapter {
             Ok(json_str) => {
                 let deserialized: JsSignatureObject = JsValue::into_serde(&json_str).unwrap();
 
-                let signature_bytes = bs58::decode(&deserialized.signature).into_vec().unwrap();
-                let signature = Signature::new(&signature_bytes);
+                let signature = Signature::from_str(&deserialized.signature).unwrap();
                 info!("Got signature: {:?}", signature);
 
                 Ok(signature)
@@ -474,12 +408,21 @@ impl WalletAdapter for BaseWalletAdapter {
             return Err(WalletError::WalletNotConnectedError);
         }
 
-        let transaction_bytes =
+        let message_bytes =
             bincode::serialize(&message).map_err(|_| WalletError::WalletSignTransactionError)?;
 
-        let transaction_js_array = Uint8Array::from(&transaction_bytes[..]);
+        let message_js_array = Uint8Array::from(&message_bytes[..]);
 
-        let promise: Promise = SOLANA.sign_message(&transaction_js_array);
+        let promise: Promise = match self.name {
+            Wallet::Phantom => SOLANA.sign_message(&message_js_array),
+            Wallet::Solflare => SOLFLARE.sign_message(&message_js_array),
+            Wallet::Backpack => BACKPACK.sign_message(
+                &message_js_array,
+                &JsValue::from(self.public_key.unwrap()),
+                &JsValue::from("uuid"),
+            ),
+        };
+
         let result = JsFuture::from(promise).await;
 
         match result {
@@ -488,7 +431,7 @@ impl WalletAdapter for BaseWalletAdapter {
                 let data = sig_obj.signature.data;
 
                 let signature = Signature::new(&data);
-                info!("Transaction signed: {:?}", signature);
+                info!("Message signed: {:?}", signature);
 
                 Ok(signature)
             }
