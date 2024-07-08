@@ -89,7 +89,7 @@ footer {
     width: 600px;
 }
 
-.send-sol-form {
+.send-sol-form, .sign-form {
     max-width: 400px;
     margin: auto;
     padding: 20px;
@@ -99,6 +99,11 @@ footer {
 
     color: #0ff;
 }
+
+.forms {
+    display: flex;
+}
+
 
 .form-title {
     text-align: center;

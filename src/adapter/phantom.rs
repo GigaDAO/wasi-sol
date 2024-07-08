@@ -33,25 +33,25 @@ extern "C" {
     #[wasm_bindgen(method)]
     pub fn signAllTransactions(this: &Solana, transactions: &JsValue) -> Promise;
 
-    #[wasm_bindgen(method, js_name = signAndSendAllTransactions)]
-    pub fn sign_and_send_all_transactions(
-        this: &Solana,
-        options: &JsValue,
-        second_param: &JsValue,
-    ) -> Promise;
-
     #[wasm_bindgen(method, js_name = signAndSendTransaction)]
     pub fn sign_and_send_transaction(
         this: &Solana,
+        transaction: &JsValue,
         options: &JsValue,
-        second_param: &JsValue,
+    ) -> Promise;
+
+    #[wasm_bindgen(method, js_name = signAndSendAllTransactions)]
+    pub fn sign_and_send_all_transactions(
+        this: &Solana,
+        transactions: &JsValue,
+        options: &JsValue,
     ) -> Promise;
 
     #[wasm_bindgen(method, js_name = signIn)]
     pub fn sign_in(this: &Solana, options: &JsValue) -> Promise;
 
     #[wasm_bindgen(method, js_name = signMessage)]
-    pub fn sign_message(this: &Solana, message: &JsValue, options: &JsValue) -> Promise;
+    pub fn sign_message(this: &Solana, message: &JsValue) -> Promise;
 
     #[wasm_bindgen(method, js_name = signTransaction)]
     pub fn sign_transaction(this: &Solana, transaction: &JsValue) -> Promise;

@@ -37,7 +37,10 @@ pub fn WalletProvider(props: &WalletProviderProps) -> Html {
 }
 
 #[hook]
-pub fn use_wallet(wallet_name: Wallet) -> BaseWalletAdapter {
+pub fn use_wallet<W>(wallet_name: W) -> BaseWalletAdapter
+where
+    W: Into<BaseWalletAdapter> + std::fmt::Debug,
+{
     let wallets = use_context::<Vec<BaseWalletAdapter>>().expect("No WalletContext found");
     let (_wallet_name, _set_wallet_name) = use_local_storage(
         "walletName".to_string(),

@@ -103,7 +103,7 @@ footer {
     font-size: 14px;
 }
 
-.send-sol-form {
+.send-sol-form, .sign-form {
     max-width: 400px;
     margin: auto;
     padding: 20px;
@@ -112,6 +112,10 @@ footer {
     box-shadow: 0px 0px 20px rgba(0, 255, 255, 0.2);
 
     color: #0ff;
+}
+
+.forms {
+    display: flex;
 }
 
 .form-title {

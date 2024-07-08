@@ -2,15 +2,13 @@ use yew::prelude::*;
 
 use wasi_sol::{
     core::traits::WalletAdapter,
-    core::transaction::TransactionOrVersionedTransaction,
-    core::wallet::{BaseWalletAdapter, Wallet},
+    core::wallet::Wallet,
     forms::yew::login::LoginForm,
     provider::yew::{
         connection::{use_connection, ConnectionProvider},
         wallet::{use_wallet, WalletProvider},
     },
     pubkey::Pubkey,
-    signer::keypair::Keypair,
     spawn_local, system_instruction,
     transaction::Transaction,
 };
@@ -20,24 +18,11 @@ use web_sys::HtmlInputElement;
 
 #[function_component]
 pub fn App() -> Html {
-    // Use custom rpc endpoint;
     let endpoint = "https://api.mainnet-beta.solana.com";
     let wallets = vec![
-        BaseWalletAdapter::new(
-            Wallet::Solflare,
-            "https://solflare.com",
-            "images/solflare_logo.png",
-        ),
-        BaseWalletAdapter::new(
-            Wallet::Phantom,
-            "https://phantom.app",
-            "images/phantom_logo.png",
-        ),
-        BaseWalletAdapter::new(
-            Wallet::Backpack,
-            "https://backpack.app",
-            "images/backpack_logo.png",
-        ),
+        Wallet::Phantom.into(),
+        Wallet::Solflare.into(),
+        Wallet::Backpack.into(),
     ];
 
     html! {
@@ -51,10 +36,10 @@ pub fn App() -> Html {
 
 #[function_component]
 pub fn LoginPage() -> Html {
-    let connection_context = use_connection();
-    let phantom_context = use_wallet(Wallet::Phantom);
-    let solflare_context = use_wallet(Wallet::Solflare);
-    let backpack_context = use_wallet(Wallet::Backpack);
+    let _connection_context = use_connection();
+    let phantom_context = use_wallet::<Wallet>(Wallet::Phantom);
+    let solflare_context = use_wallet::<Wallet>(Wallet::Solflare);
+    let backpack_context = use_wallet::<Wallet>(Wallet::Backpack);
 
     let phantom_wallet_adapter = use_state(|| phantom_context);
     let solflare_wallet_adapter = use_state(|| solflare_context);
@@ -72,10 +57,6 @@ pub fn LoginPage() -> Html {
     let signature = use_state(String::default);
     let sig = (*signature).clone();
 
-    let input_secret_ref = use_node_ref();
-    let input_secret_handle = use_state(String::default);
-    let input_secret = (*input_secret_handle).clone();
-
     let input_dest_ref = use_node_ref();
     let input_dest_handle = use_state(String::default);
     let input_dest = (*input_dest_handle).clone();
@@ -84,18 +65,9 @@ pub fn LoginPage() -> Html {
     let input_amount_handle = use_state(|| 1);
     let input_amount = (*input_amount_handle).clone();
 
-    let on_secret_change = {
-        let input_secret_ref = input_secret_ref.clone();
-
-        Callback::from(move |_| {
-            let input = input_secret_ref.cast::<HtmlInputElement>();
-
-            if let Some(input) = input {
-                let value = input.value();
-                input_secret_handle.set(value);
-            }
-        })
-    };
+    let input_msg_ref = use_node_ref();
+    let input_msg_handle = use_state(String::default);
+    let input_msg = (*input_msg_handle).clone();
 
     let on_dest_change = {
         let input_dest_ref = input_dest_ref.clone();
@@ -123,51 +95,228 @@ pub fn LoginPage() -> Html {
         })
     };
 
-    let transfer_sol = {
+    let on_msg_change = {
+        let input_msg_ref = input_msg_ref.clone();
+
+        Callback::from(move |_| {
+            let input = input_msg_ref.cast::<HtmlInputElement>();
+
+            if let Some(input) = input {
+                let value = input.value();
+                input_msg_handle.set(value);
+            }
+        })
+    };
+
+    let transfer_sol_phantom = {
         let phantom_wallet_adapter = phantom_wallet_adapter.clone();
         let confirmed = confirmed.clone();
-        let input_secret = input_secret.clone();
         let input_dest = input_dest.clone();
+        let signature = signature.clone();
         let error = error.clone();
 
         Callback::from(move |event: SubmitEvent| {
             event.prevent_default();
             let signature = signature.clone();
-            let input_secret = input_secret.clone();
             let input_dest = input_dest.clone();
             let confirmed = confirmed.clone();
 
             let phantom_wallet_adapter = phantom_wallet_adapter.clone();
-            let connection_context = connection_context.clone();
             let error = error.clone();
 
             spawn_local(async move {
                 let mut wallet_info = (*phantom_wallet_adapter).clone();
                 let public_key = wallet_info.public_key().unwrap();
-                let client = &connection_context.connection;
 
                 let transfer_instruction = system_instruction::transfer(
                     &public_key,
                     &Pubkey::from_str(&input_dest).unwrap(),
                     input_amount,
                 );
-                let recent_blockhash = client.get_latest_blockhash().await.unwrap();
 
-                let keypair = Keypair::from_base58_string(&input_secret);
+                let tx = Transaction::new_with_payer(&[transfer_instruction], Some(&public_key));
+                match wallet_info.sign_send_transaction(tx.clone()).await {
+                    Ok(tx) => {
+                        signature.set(tx.to_string());
+                        confirmed.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Error: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
 
-                let tx = Transaction::new_signed_with_payer(
-                    &[transfer_instruction],
-                    Some(&public_key),
-                    &[&keypair],
-                    recent_blockhash,
+    let sign_msg_phantom = {
+        let phantom_wallet_adapter = phantom_wallet_adapter.clone();
+        let confirmed = confirmed.clone();
+        let input_msg = input_msg.clone();
+        let signature = signature.clone();
+        let error = error.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            let signature = signature.clone();
+            let input_msg = input_msg.clone();
+            let confirmed = confirmed.clone();
+
+            let phantom_wallet_adapter = phantom_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut wallet_info = (*phantom_wallet_adapter).clone();
+
+                match wallet_info.sign_message(&input_msg).await {
+                    Ok(tx) => {
+                        signature.set(tx.to_string());
+                        confirmed.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Error: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
+
+    let transfer_sol_solflare = {
+        let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+        let confirmed = confirmed.clone();
+        let input_dest = input_dest.clone();
+        let signature = signature.clone();
+        let error = error.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            let signature = signature.clone();
+            let input_dest = input_dest.clone();
+            let confirmed = confirmed.clone();
+
+            let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut wallet_info = (*solflare_wallet_adapter).clone();
+                let public_key = wallet_info.public_key().unwrap();
+
+                let transfer_instruction = system_instruction::transfer(
+                    &public_key,
+                    &Pubkey::from_str(&input_dest).unwrap(),
+                    input_amount,
                 );
 
-                let transaction = TransactionOrVersionedTransaction::Transaction(tx);
+                let tx = Transaction::new_with_payer(&[transfer_instruction], Some(&public_key));
+                match wallet_info.sign_send_transaction(tx.clone()).await {
+                    Ok(tx) => {
+                        signature.set(tx.to_string());
+                        confirmed.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Error: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
 
-                match wallet_info
-                    .send_transaction(client.clone(), transaction)
-                    .await
-                {
+    let sign_msg_solflare = {
+        let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+        let confirmed = confirmed.clone();
+        let input_msg = input_msg.clone();
+        let error = error.clone();
+        let signature = signature.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            let signature = signature.clone();
+            let input_msg = input_msg.clone();
+            let confirmed = confirmed.clone();
+
+            let solflare_wallet_adapter = solflare_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut wallet_info = (*solflare_wallet_adapter).clone();
+
+                match wallet_info.sign_message(&input_msg).await {
+                    Ok(tx) => {
+                        signature.set(tx.to_string());
+                        confirmed.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Error: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
+
+    let transfer_sol_backpack = {
+        let backpack_wallet_adapter = backpack_wallet_adapter.clone();
+        let confirmed = confirmed.clone();
+        let input_dest = input_dest.clone();
+        let signature = signature.clone();
+        let error = error.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            let signature = signature.clone();
+            let input_dest = input_dest.clone();
+            let confirmed = confirmed.clone();
+
+            let backpack_wallet_adapter = backpack_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut wallet_info = (*backpack_wallet_adapter).clone();
+                let public_key = wallet_info.public_key().unwrap();
+
+                let transfer_instruction = system_instruction::transfer(
+                    &public_key,
+                    &Pubkey::from_str(&input_dest).unwrap(),
+                    input_amount,
+                );
+
+                let tx = Transaction::new_with_payer(&[transfer_instruction], Some(&public_key));
+                match wallet_info.sign_send_transaction(tx.clone()).await {
+                    Ok(tx) => {
+                        signature.set(tx.to_string());
+                        confirmed.set(true);
+                    }
+                    Err(err) => {
+                        log::error!("Error: {}", err);
+                        error.set(Some(err.to_string()));
+                    }
+                }
+            });
+        })
+    };
+
+    let sign_msg_backpack = {
+        let backpack_wallet_adapter = backpack_wallet_adapter.clone();
+        let confirmed = confirmed.clone();
+        let input_msg = input_msg.clone();
+        let signature = signature.clone();
+        let error = error.clone();
+
+        Callback::from(move |event: SubmitEvent| {
+            event.prevent_default();
+            let signature = signature.clone();
+            let input_msg = input_msg.clone();
+            let confirmed = confirmed.clone();
+
+            let backpack_wallet_adapter = backpack_wallet_adapter.clone();
+            let error = error.clone();
+
+            spawn_local(async move {
+                let mut wallet_info = (*backpack_wallet_adapter).clone();
+
+                match wallet_info.sign_message(&input_msg).await {
                     Ok(tx) => {
                         signature.set(tx.to_string());
                         confirmed.set(true);
@@ -195,48 +344,58 @@ pub fn LoginPage() -> Html {
                         if let Some(ref key) = phantom_wallet_info.public_key() {
                             <p>{ format!("Connected Wallet: {}", phantom_wallet_info.name()) }</p>
                             <p>{ format!("Connected Public Key: {}", key) }</p>
-                            <div class="send-sol-form">
-                                <h2 class="form-title">{ "Transfer SOL" }</h2>
-                                <form onsubmit={transfer_sol}>
-                                    <div class="form-group">
-                                        <label for="secret-key">{ "Secret Key" }</label>
-                                        <input
-                                            id="secret-key"
-                                            type="password"
-                                            class="form-control"
-                                            ref={input_secret_ref}
-                                            required=true
-                                            oninput={on_secret_change}
-                                        />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="destination-address">
-                                            { "Destination Address" }
-                                        </label>
-                                        <input
-                                            id="destination-address"
-                                            type="text"
-                                            class="form-control"
-                                            ref={input_dest_ref}
-                                            required=true
-                                            oninput={on_dest_change}
-                                        />
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="sol-amount">
-                                            { "SOL Amount (in lamports)" }
-                                        </label>
-                                        <input
-                                            id="sol-amount"
-                                            type="number"
-                                            class="form-control"
-                                            ref={input_amount_ref}
-                                            required=true
-                                            oninput={on_amount_change}
-                                        />
-                                    </div>
-                                    <button type="submit" class="submit-button">{ "Send" }</button>
-                                </form>
+                            <div class="forms">
+                                <div class="send-sol-form">
+                                    <h2 class="form-title">{ "Transfer SOL" }</h2>
+                                    <form onsubmit={transfer_sol_phantom}>
+                                        <div class="form-group">
+                                            <label for="destination-address">
+                                                { "Destination Address" }
+                                            </label>
+                                            <input
+                                                id="destination-address"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_dest_ref}
+                                                required=true
+                                                oninput={on_dest_change}
+                                            />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="sol-amount">
+                                                { "SOL Amount (in lamports)" }
+                                            </label>
+                                            <input
+                                                id="sol-amount"
+                                                type="number"
+                                                class="form-control"
+                                                ref={input_amount_ref}
+                                                required=true
+                                                oninput={on_amount_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Send" }</button>
+                                    </form>
+                                </div>
+                                <div class="sign-form">
+                                    <h2 class="form-title">{ "Sign Message" }</h2>
+                                    <form onsubmit={sign_msg_phantom}>
+                                        <div class="form-group">
+                                            <label for="message">
+                                                { "Message" }
+                                            </label>
+                                            <input
+                                                id="Message"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_msg_ref}
+                                                required=true
+                                                oninput={on_msg_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Sign" }</button>
+                                    </form>
+                                </div>
                             </div>
                             if *confirmed {
                                 <div class="transaction-info">
@@ -254,18 +413,150 @@ pub fn LoginPage() -> Html {
                         } else if let Some(ref key) = solflare_wallet_info.public_key() {
                             <p>{ format!("Connected Wallet: {}", solflare_wallet_info.name()) }</p>
                             <p>{ format!("Connected Public Key: {}", key) }</p>
+                            <div class="forms">
+                                <div class="send-sol-form">
+                                    <h2 class="form-title">{ "Transfer SOL" }</h2>
+                                    <form onsubmit={transfer_sol_solflare}>
+                                        <div class="form-group">
+                                            <label for="destination-address">
+                                                { "Destination Address" }
+                                            </label>
+                                            <input
+                                                id="destination-address"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_dest_ref}
+                                                required=true
+                                                oninput={on_dest_change}
+                                            />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="sol-amount">
+                                                { "SOL Amount (in lamports)" }
+                                            </label>
+                                            <input
+                                                id="sol-amount"
+                                                type="number"
+                                                class="form-control"
+                                                ref={input_amount_ref}
+                                                required=true
+                                                oninput={on_amount_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Send" }</button>
+                                    </form>
+                                </div>
+                                <div class="sign-form">
+                                    <h2 class="form-title">{ "Sign Message" }</h2>
+                                    <form onsubmit={sign_msg_solflare}>
+                                        <div class="form-group">
+                                            <label for="message">
+                                                { "Message" }
+                                            </label>
+                                            <input
+                                                id="Message"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_msg_ref}
+                                                required=true
+                                                oninput={on_msg_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Sign" }</button>
+                                    </form>
+                                </div>
+                            </div>
+                            if *confirmed {
+                                <div class="transaction-info">
+                                    <p>{ "Transaction Successful!" }</p>
+                                    <a
+                                        href={format!("https://solscan.io/tx/{}", sig)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="view-transaction-button"
+                                    >
+                                        { "View Transaction" }
+                                    </a>
+                                </div>
+                            }
                         } else if let Some(ref key) = backpack_wallet_info.public_key() {
                             <p>{ format!("Connected Wallet: {}", backpack_wallet_info.name()) }</p>
                             <p>{ format!("Connected Public Key: {}", key) }</p>
+                            <div class="forms">
+                                <div class="send-sol-form">
+                                    <h2 class="form-title">{ "Transfer SOL (Coming Soon)" }</h2>
+                                    <form onsubmit={transfer_sol_backpack}>
+                                        <div class="form-group">
+                                            <label for="destination-address">
+                                                { "Destination Address" }
+                                            </label>
+                                            <input
+                                                id="destination-address"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_dest_ref}
+                                                required=true
+                                                oninput={on_dest_change}
+                                            />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="sol-amount">
+                                                { "SOL Amount (in lamports)" }
+                                            </label>
+                                            <input
+                                                id="sol-amount"
+                                                type="number"
+                                                class="form-control"
+                                                ref={input_amount_ref}
+                                                required=true
+                                                oninput={on_amount_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Send" }</button>
+                                    </form>
+                                </div>
+                                <div class="sign-form">
+                                    <h2 class="form-title">{ "Sign Message (Coming Soon)" }</h2>
+                                    <form onsubmit={sign_msg_backpack}>
+                                        <div class="form-group">
+                                            <label for="message">
+                                                { "Message" }
+                                            </label>
+                                            <input
+                                                id="Message"
+                                                type="text"
+                                                class="form-control"
+                                                ref={input_msg_ref}
+                                                required=true
+                                                oninput={on_msg_change}
+                                            />
+                                        </div>
+                                        <button type="submit" class="submit-button">{ "Sign" }</button>
+                                    </form>
+                                </div>
+                            </div>
+                            if *confirmed {
+                                <div class="transaction-info">
+                                    <p>{ "Transaction Successful!" }</p>
+                                    <a
+                                        href={format!("https://solscan.io/tx/{}", sig)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="view-transaction-button"
+                                    >
+                                        { "View Transaction" }
+                                    </a>
+                                </div>
+                            }
                         } else {
                             <p>{ "Connected but no wallet info available" }</p>
                         }
                     }
                 </div>
                 <LoginForm
-                    phantom={phantom_wallet_adapter}
-                    solflare={solflare_wallet_adapter}
-                    backpack={backpack_wallet_adapter}
+                    phantom={Some(phantom_wallet_adapter)}
+                    solflare={Some(solflare_wallet_adapter)}
+                    backpack={Some(backpack_wallet_adapter)}
                     {connected}
                 />
                 if let Some(ref e) = *error {

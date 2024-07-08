@@ -1,7 +1,5 @@
-use web_sys::window;
 use yew::prelude::*;
 
-use crate::adapter::{backpack::XNFT, phantom::SOLANA, solflare::SOLFLARE};
 use crate::core::traits::WalletAdapter;
 use crate::core::wallet::BaseWalletAdapter;
 use crate::pubkey::Pubkey;
@@ -9,9 +7,9 @@ use wasm_bindgen_futures::spawn_local;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub phantom: UseStateHandle<BaseWalletAdapter>,
-    pub solflare: UseStateHandle<BaseWalletAdapter>,
-    pub backpack: UseStateHandle<BaseWalletAdapter>,
+    pub phantom: Option<UseStateHandle<BaseWalletAdapter>>,
+    pub solflare: Option<UseStateHandle<BaseWalletAdapter>>,
+    pub backpack: Option<UseStateHandle<BaseWalletAdapter>>,
     pub connected: UseStateHandle<bool>,
 }
 
@@ -19,9 +17,23 @@ pub struct Props {
 pub fn LoginForm(props: &Props) -> Html {
     let connected = &props.connected;
 
-    let phantom_wallet_adapter = &props.phantom;
-    let solflare_wallet_adapter = &props.solflare;
-    let backpack_wallet_adapter = &props.backpack;
+    let phantom_wallet = &props.phantom;
+    let solflare_wallet = &props.solflare;
+    let backpack_wallet = &props.backpack;
+
+    let mut phantom_wallet_adapter = use_state(|| BaseWalletAdapter::default());
+    let mut solflare_wallet_adapter = use_state(|| BaseWalletAdapter::default());
+    let mut backpack_wallet_adapter = use_state(|| BaseWalletAdapter::default());
+
+    if phantom_wallet.is_some() {
+        phantom_wallet_adapter = phantom_wallet.clone().unwrap();
+    }
+    if solflare_wallet.is_some() {
+        solflare_wallet_adapter = solflare_wallet.clone().unwrap();
+    }
+    if backpack_wallet.is_some() {
+        backpack_wallet_adapter = backpack_wallet.clone().unwrap();
+    }
 
     let phantom_wallet_info = (*phantom_wallet_adapter).clone();
     let solflare_wallet_info = (*solflare_wallet_adapter).clone();
@@ -33,7 +45,6 @@ pub fn LoginForm(props: &Props) -> Html {
         let connected = connected.clone();
         let phantom_wallet_adapter = phantom_wallet_adapter.clone();
         let error = error.clone();
-        let url = phantom_wallet_info.clone().url();
 
         Callback::from(move |_| {
             let connected = connected.clone();
@@ -50,26 +61,15 @@ pub fn LoginForm(props: &Props) -> Html {
                     });
 
                 match phantom_wallet_info.connect().await {
-                    Ok(_) => {
+                    Ok(conn) => {
                         phantom_wallet_adapter.set(phantom_wallet_info);
-                        connected.set(true);
+                        connected.set(conn);
                     }
                     Err(err) => {
                         error.set(Some(err.to_string()));
-                        let window = window().expect("no global `window` exists");
-                        window
-                            .open_with_url(&phantom_wallet_info.url())
-                            .expect("failed to open a new tab");
                     }
                 }
             });
-
-            if SOLANA.is_undefined() {
-                let window = window().expect("no global `window` exists");
-                window
-                    .open_with_url(&url)
-                    .expect("failed to open a new tab");
-            }
         })
     };
 
@@ -77,7 +77,6 @@ pub fn LoginForm(props: &Props) -> Html {
         let connected = connected.clone();
         let solflare_wallet_adapter = solflare_wallet_adapter.clone();
         let error = error.clone();
-        let url = solflare_wallet_info.clone().url();
 
         Callback::from(move |_| {
             let connected = connected.clone();
@@ -94,27 +93,16 @@ pub fn LoginForm(props: &Props) -> Html {
                     });
 
                 match solflare_wallet_info.connect().await {
-                    Ok(_) => {
+                    Ok(conn) => {
                         solflare_wallet_adapter.set(solflare_wallet_info);
-                        connected.set(true);
+                        connected.set(conn);
                     }
                     Err(err) => {
                         log::info!("Event Listener: Got pubkey {}", err);
                         error.set(Some(err.to_string()));
-                        let window = window().expect("no global `window` exists");
-                        window
-                            .open_with_url(&solflare_wallet_info.url())
-                            .expect("failed to open a new tab");
                     }
                 }
             });
-
-            if SOLFLARE.is_undefined() {
-                let window = window().expect("no global `window` exists");
-                window
-                    .open_with_url(&url)
-                    .expect("failed to open a new tab");
-            }
         })
     };
 
@@ -122,7 +110,6 @@ pub fn LoginForm(props: &Props) -> Html {
         let connected = connected.clone();
         let backpack_wallet_adapter = backpack_wallet_adapter.clone();
         let error = error.clone();
-        let url = backpack_wallet_info.clone().url();
 
         Callback::from(move |_| {
             let connected = connected.clone();
@@ -140,26 +127,15 @@ pub fn LoginForm(props: &Props) -> Html {
                     });
 
                 match backpack_wallet_info.connect().await {
-                    Ok(_) => {
+                    Ok(conn) => {
                         backpack_wallet_adapter.set(backpack_wallet_info.clone());
-                        connected.set(true);
+                        connected.set(conn);
                     }
                     Err(err) => {
                         error.set(Some(err.to_string()));
-                        let window = window().expect("no global `window` exists");
-                        window
-                            .open_with_url(&backpack_wallet_info.url())
-                            .expect("failed to open a new tab");
                     }
                 }
             });
-
-            if XNFT.is_undefined() {
-                let window = window().expect("no global `window` exists");
-                window
-                    .open_with_url(&url)
-                    .expect("failed to open a new tab");
-            }
         })
     };
 
@@ -209,33 +185,39 @@ pub fn LoginForm(props: &Props) -> Html {
         <div class="container">
             <div class="buttons">
                 if !**connected {
-                    <button
-                        onclick={connect_phantom_wallet.clone()}
-                    >
-                        <img
-                            src={phantom_wallet_info.icon()}
-                            alt="Phantom Wallet"
-                        />
-                        { "Connect Phantom Wallet" }
-                    </button>
-                    <button
-                        onclick={connect_solflare_wallet.clone()}
-                    >
-                        <img
-                            src={solflare_wallet_info.icon()}
-                            alt="Solflare Wallet"
-                        />
-                        { "Connect Solflare Wallet" }
-                    </button>
-                    <button
-                        onclick={connect_backpack_wallet.clone()}
-                    >
-                        <img
-                            src={backpack_wallet_info.icon()}
-                            alt="Backpack Wallet"
-                        />
-                        { "Connect Backpack Wallet" }
-                    </button>
+                    if phantom_wallet.is_some() {
+                        <button
+                            onclick={connect_phantom_wallet.clone()}
+                        >
+                            <img
+                                src={phantom_wallet_info.icon()}
+                                alt="Phantom Wallet"
+                            />
+                            { "Connect Phantom Wallet" }
+                        </button>
+                    }
+                    if solflare_wallet.is_some() {
+                        <button
+                            onclick={connect_solflare_wallet.clone()}
+                        >
+                            <img
+                                src={solflare_wallet_info.icon()}
+                                alt="Solflare Wallet"
+                            />
+                            { "Connect Solflare Wallet" }
+                        </button>
+                    }
+                    if backpack_wallet.is_some() {
+                        <button
+                            onclick={connect_backpack_wallet.clone()}
+                        >
+                            <img
+                                src={backpack_wallet_info.icon()}
+                                alt="Backpack Wallet"
+                            />
+                            { "Connect Backpack Wallet" }
+                        </button>
+                    }
                 } else if let Some(ref _key) = phantom_wallet_info.public_key() {
                     <button class="disconnect" onclick={disconnect_wallet.clone()}>
                         <img
