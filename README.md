@@ -60,7 +60,7 @@ A Solana Wallet adapter for WASM frameworks.
 
 Wasi Sol provides providers and hooks that you can use to bring all wallet adapter functionalities to your app. To begin, wrap your main `App` component with the corresponding providers:
 
-```rust
+```rust , ignore
 // Yew Component
 
 #[function_component]
@@ -84,7 +84,7 @@ pub fn App() -> Html {
 
 This will allow you to use the hooks to create the wallet adapter that exists in the wallets vector:
 
-```rust
+```rust , ignore
 // Yew Component
 
 #[function_component]
@@ -104,7 +104,7 @@ pub fn LoginPage() -> Html {
 
 Now you can choose the wallets you want to add to allow users to connect to. Wasi Sol comes with built-in reusable components that encapsulate all connect and disconnect logic so that you can develop web apps quickly:
 
-```rust
+```rust , ignore
 // Yew Component
 
 #[function_component]
