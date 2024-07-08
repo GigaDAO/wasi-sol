@@ -51,21 +51,88 @@ A Solana Wallet adapter for WASM frameworks.
 |-----------------------|-----------|--------|
 | `connect`             | ✅        | ✅     |
 | `disconnect`          | ✅        | ✅     |
-| `send_transaction`    | ✅        | ✅     |
 | `sign_in`             | ✅        | ✅     |
-| `sign_message`        | ✅        | ⬛     |
-| `sign_transaction`    | ✅        | ⬛     |
-| `sign_all_transactions` | ⬛      | ⬛     |
+| `sign_message`        | ✅        | ✅     |
+| `sign_transaction`    | ✅        | ✅     |
+| `send_transaction`    | ✅        | ✅     |
 
-⬛: TODO
+## 🔥 Getting Started
+
+Wasi Sol provides providers and hooks that you can use to bring all wallet adapter functionalities to your app. To begin, wrap your main `App` component with the corresponding providers:
+
+```rust
+// Yew Component
+
+#[function_component]
+pub fn App() -> Html {
+    let endpoint = "https://api.mainnet-beta.solana.com";
+    let wallets = vec![
+        Wallet::Phantom.into(),
+        Wallet::Solflare.into(),
+        Wallet::Backpack.into(),
+    ];
+
+    html! {
+        <ConnectionProvider {endpoint}>
+            <WalletProvider {wallets}>
+                <LoginPage />
+            </WalletProvider>
+        </ConnectionProvider>
+    }
+}
+```
+
+This will allow you to use the hooks to create the wallet adapter that exists in the wallets vector:
+
+```rust
+// Yew Component
+
+#[function_component]
+pub fn LoginPage() -> Html {
+    let phantom_context = use_wallet::<Wallet>(Wallet::Phantom);
+    let solflare_context = use_wallet::<Wallet>(Wallet::Solflare);
+    let backpack_context = use_wallet::<Wallet>(Wallet::Backpack);
+
+    // ...snip...
+
+    html! {
+        <>
+        </>
+    }
+}
+```
+
+Now you can choose the wallets you want to add to allow users to connect to. Wasi Sol comes with built-in reusable components that encapsulate all connect and disconnect logic so that you can develop web apps quickly:
+
+```rust
+// Yew Component
+
+#[function_component]
+pub fn LoginPage() -> Html {
+    // ...snip...
+
+    html! {
+        <LoginForm
+            phantom={Some(phantom_wallet_adapter)}
+            solflare={Some(solflare_wallet_adapter)}
+            backpack={None}
+            {connected}
+        />
+    }
+}
+```
+
+This will select the Phantom and Solflare wallets and allow users to connect them to the app. The Backpack wallet is disabled in this case.
+
+More detailed implementations can be found in the examples below.
 
 ## 🚀 Examples
 
 | Framework | Example   |
 |-----------|-------------|
-| Yew       | [![Github](https://img.shields.io/badge/launch-Github-181717.svg?logo=github&logoColor=white)](./examples/yew)         |
-| Dioxus    | [![Github](https://img.shields.io/badge/launch-Github-181717.svg?logo=github&logoColor=white)](./examples/dioxus)          |
-| Leptos    | [![Github](https://img.shields.io/badge/launch-Github-181717.svg?logo=github&logoColor=white)](./examples/leptos)             |
+| Yew       | [![Github](https://img.shields.io/badge/Open-Github-181717.svg?logo=github&logoColor=white)](./examples/yew)         |
+| Dioxus    | [![Github](https://img.shields.io/badge/Open-Github-181717.svg?logo=github&logoColor=white)](./examples/dioxus)          |
+| Leptos    | [![Github](https://img.shields.io/badge/Open-Github-181717.svg?logo=github&logoColor=white)](./examples/leptos)             |
 
 ## 🎧 Event Listener
 
