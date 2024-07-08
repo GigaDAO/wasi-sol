@@ -83,3 +83,76 @@ footer {
     border-top: 1px solid #666;
     font-size: 14px;
 }
+
+
+.send-sol-form, .sign-form {
+    max-width: 400px;
+    margin: auto;
+    padding: 20px;
+    background-color: #222;
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px rgba(0, 255, 255, 0.2);
+
+    color: #0ff;
+}
+
+.forms {
+    display: flex;
+}
+
+.form-title {
+    text-align: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+.form-control {
+    width: 95%;
+    padding: 8px;
+    font-size: 16px;
+    background-color: #111; 
+    border: 1px solid #0ff;
+    color: #0ff;
+    border-radius: 5px;
+}
+
+.submit-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    background-color: #fff;
+    color: #222;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #00ffff;
+}
+
+.view-transaction-button {
+    display: inline-block;
+    padding: 8px 16px;
+    margin-top: 10px;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.view-transaction-button:hover {
+    background-color: #0056b3;
+}
