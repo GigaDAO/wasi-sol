@@ -7,9 +7,9 @@ use crate::core::wallet::BaseWalletAdapter;
 
 #[derive(Props, Clone, PartialEq)]
 pub struct CompProps {
-    pub phantom: Signal<BaseWalletAdapter, UnsyncStorage>,
-    pub solflare: Signal<BaseWalletAdapter, UnsyncStorage>,
-    pub backpack: Signal<BaseWalletAdapter, UnsyncStorage>,
+    pub phantom: Option<Signal<BaseWalletAdapter, UnsyncStorage>>,
+    pub solflare: Option<Signal<BaseWalletAdapter, UnsyncStorage>>,
+    pub backpack: Option<Signal<BaseWalletAdapter, UnsyncStorage>>,
     pub connected: Signal<bool, UnsyncStorage>,
 }
 

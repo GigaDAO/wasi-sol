@@ -37,9 +37,9 @@ pub enum Wallet {
     Backpack,
 }
 
-impl Into<BaseWalletAdapter> for Wallet {
-    fn into(self) -> BaseWalletAdapter {
-        match self {
+impl From<Wallet> for BaseWalletAdapter {
+    fn from(val: Wallet) -> Self {
+        match val {
             Wallet::Phantom => BaseWalletAdapter::new(
                 Wallet::Phantom,
                 "https://phantom.app",
