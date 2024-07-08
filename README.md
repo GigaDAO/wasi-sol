@@ -19,11 +19,11 @@
 
 [![GigaDAO Discord](https://dcbadge.limes.pink/api/server/gigadao-gigadex-now-live-920188005686337566)](https://discord.gg/gigadao-gigadex-now-live-920188005686337566)
 
-| Framework | Demo |
-| --- | --- |
-| Yew | ![yew-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/a77daf37-487a-446c-8acd-9d46427503ad) |
-| Dioxus | ![dioxus-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/8f2f4dda-aae2-4bb4-ad1d-1794b10d8949) |
-| Leptos | ![leptos-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/ee09d80b-2355-45a3-b1b5-2a0876b780fe) |
+| Framework | Demo | Live Demo |
+| --- | --- | --- |
+| Yew | ![yew-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/a77daf37-487a-446c-8acd-9d46427503ad) | [![Netlify Status](https://api.netlify.com/api/v1/badges/d7858d73-f54a-4d4f-878f-466168d8ea07/deploy-status)](https://wasi-sol.netlify.app/) |
+| Dioxus | ![dioxus-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/8f2f4dda-aae2-4bb4-ad1d-1794b10d8949) | [![Netlify Status](https://api.netlify.com/api/v1/badges/15f88b9f-edfd-4e94-9bca-2150b95343ca/deploy-status)](https://wasi-sol-dio.netlify.app) |
+| Leptos | ![leptos-demo](https://github.com/GigaDAO/wasi-sol/assets/62179149/ee09d80b-2355-45a3-b1b5-2a0876b780fe) | [![Netlify Status](https://api.netlify.com/api/v1/badges/21898514-21da-4a2d-a50f-1e8fad55dd2a/deploy-status)](https://wasi-sol-lep.netlify.app/) |
 
 </div>
 
