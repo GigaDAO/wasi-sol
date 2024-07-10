@@ -29,7 +29,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Clone, PartialEq, Default)]
+use gloo_storage::{LocalStorage, Storage};
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub enum Wallet {
     #[default]
     Phantom,
@@ -138,6 +140,8 @@ impl WalletAdapter for BaseWalletAdapter {
 
         self.connecting = true;
 
+        LocalStorage::set(&"walletName", &self.name()).ok();
+
         let options = js_sys::Object::new();
         js_sys::Reflect::set(
             &options,
@@ -175,6 +179,7 @@ impl WalletAdapter for BaseWalletAdapter {
 
                         let public_key = Pubkey::from_str(&key_str).unwrap();
                         info!("Connected to wallet with public key: {:?}", public_key);
+                        LocalStorage::set(&"pubKey", &public_key).ok();
                         self.public_key = Some(public_key);
                         self.ready_state = WalletReadyState::Installed;
                         self.emit_connect(public_key);
@@ -199,6 +204,14 @@ impl WalletAdapter for BaseWalletAdapter {
     async fn disconnect(&mut self) -> Result<bool, WalletError> {
         info!("Disconnecting from wallet...");
         let mut confirmed = false;
+
+        let public_key: Pubkey = LocalStorage::get(&"pubKey").unwrap();
+        let wallet_name: Wallet = LocalStorage::get(&"walletName").unwrap();
+
+        if !public_key.to_string().is_empty() {
+            self.public_key = Some(public_key);
+            self.name = wallet_name;
+        }
 
         if self.public_key.is_none() {
             self.emit_error(WalletError::WalletDisconnectedError);

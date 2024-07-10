@@ -42,10 +42,7 @@ where
     W: Into<BaseWalletAdapter> + std::fmt::Debug,
 {
     let wallets = use_context::<Vec<BaseWalletAdapter>>().expect("No WalletContext found");
-    let (_wallet_name, _set_wallet_name) = use_local_storage(
-        "walletName".to_string(),
-        format!("{:?}", wallet_name).to_string(),
-    );
+
     wallets
         .iter()
         .find(|wallet| wallet.name() == format!("{:?}", wallet_name).to_string())
