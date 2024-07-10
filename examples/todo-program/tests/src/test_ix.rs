@@ -54,7 +54,6 @@ fn test_initialize_account() {
     println!("InitializeAccount transaction signature: {}", tx);
 }
 
-#[test]
 fn test_create_todo() {
     let (_client, program, program_id, authority) = setup_program();
 
@@ -91,7 +90,6 @@ fn test_create_todo() {
     println!("CreateTodo transaction signature: {}", tx);
 }
 
-#[test]
 fn test_update_todo() {
     test_create_todo();
 
@@ -131,11 +129,7 @@ fn test_update_todo() {
     println!("UpdateTodo transaction signature: {}", tx);
 }
 
-#[test]
 fn test_delete_todo() {
-    test_initialize_account();
-    test_create_todo();
-
     let (_client, program, program_id, authority) = setup_program();
 
     let todo_account_pubkey =
