@@ -1,0 +1,202 @@
+{
+  "version": "0.1.0",
+  "name": "todo_program",
+  "constants": [
+    {
+      "name": "USER_STATE_SEED",
+      "type": "bytes",
+      "value": "[85, 83, 69, 82, 95, 83, 84, 65, 84, 69, 95, 83, 69, 69, 68]"
+    },
+    {
+      "name": "TODO_STATE_SEED",
+      "type": "bytes",
+      "value": "[84, 79, 68, 79, 95, 83, 84, 65, 84, 69, 95, 83, 69, 69, 68]"
+    }
+  ],
+  "instructions": [
+    {
+      "name": "initializeAccount",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "todoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "createTodo",
+      "accounts": [
+        {
+          "name": "todoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "todoUser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "content",
+          "type": "string"
+        },
+        {
+          "name": "todoId",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "updateTodo",
+      "accounts": [
+        {
+          "name": "todoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "todoUser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "todoId",
+          "type": "u128"
+        },
+        {
+          "name": "content",
+          "type": {
+            "option": "string"
+          }
+        },
+        {
+          "name": "completed",
+          "type": {
+            "option": "bool"
+          }
+        }
+      ]
+    },
+    {
+      "name": "deleteTodo",
+      "accounts": [
+        {
+          "name": "todoAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "todoUser",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "todoId",
+          "type": "u128"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "TodoAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "todoId",
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TodoUser",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u128"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "content",
+            "type": "string"
+          },
+          {
+            "name": "completed",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ContentTooLong",
+      "msg": "The provided content exceeds the maximum allowed length of 280 characters."
+    },
+    {
+      "code": 6001,
+      "name": "InvalidTodoId",
+      "msg": "The provided Todo ID does not match the existing Todo ID."
+    }
+  ]
+}
