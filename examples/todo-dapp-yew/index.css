@@ -1,0 +1,325 @@
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+main {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 600px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+h1, h2 {
+    text-align: center;
+    margin: 0;
+    padding: 10px 0;
+}
+
+h1 {
+    animation: None;
+}
+
+h1 {
+    font-size: 2em;
+    color: #00ff99;
+    text-shadow: 0 0 10px rgba(0, 255, 153, 0.5);
+}
+
+h2 {
+    font-size: 1.5em;
+    color: #ff0099;
+    text-shadow: 0 0 10px rgba(255, 0, 153, 0.5);
+}
+
+button, input[type="text"] {
+    background: #333;
+    color: #e0e0e0;
+    border: none;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+button:hover, input[type="text"]:focus {
+    background: #444;
+    box-shadow: 0 0 10px #00ff99, 0 0 20px #00ff99;
+}
+
+button {
+    cursor: pointer;
+}
+
+form {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+form button {
+    font-size: 1.2em;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    background-color: #444;
+    color: #00ff99;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+form button:hover {
+    background: #555;
+    box-shadow: 0 0 15px #00ff99, 0 0 30px #00ff99;
+}
+
+form input[type="text"] {
+    flex: 1;
+    margin-left: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.task {
+    display: flex;
+    align-items: center;
+    background: #222;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    transition: background 0.3s ease;
+}
+
+.task.done {
+    background: #333;
+    color: #00ff99;
+    text-decoration: line-through;
+}
+
+.task .task-name {
+    flex: 1;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+.task form {
+    flex: 1;
+    display: flex;
+}
+
+.task input[type="text"] {
+    flex: 1;
+    padding: 5px;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.task .trash {
+    background: none;
+    border: none;
+    color: #ff0099;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.task .trash:hover {
+    transform: scale(1.2);
+}
+
+.checkbox {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.checkbox svg {
+    fill: #e0e0e0;
+}
+
+.checkbox.unchecked:hover {
+    box-shadow: 0 0 10px #ff0099, 0 0 20px #ff0099;
+}
+
+.checkbox.checked {
+    box-shadow: 0 0 10px #00ff99, 0 0 20px #00ff99;
+}
+
+.checkbox.checked svg {
+    fill: #00ff99;
+}
+
+.container {
+    text-align: center;
+}
+
+.header {
+    margin-bottom: 20px;
+    animation: fadeInDown 1s ease-in-out;
+}
+
+.header h1 {
+    font-weight: bold;
+    margin: 0;
+}
+
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.hero-image {
+    max-width: 80%;
+    height: auto;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    animation: fadeInUp 1s ease-in-out;
+}
+
+.login-button {
+    background-color: #6200ee;
+    border: none;
+    color: white;
+    padding: 15px 30px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1.2em;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.login-button:hover {
+    background-color: #3700b3;
+    transform: translateY(-2px);
+}
+
+
+.wallet-adapter {
+    max-width: 600px;
+    width: 100%;
+    padding: 20px;
+    background: linear-gradient(45deg, #1a1a1a, #333);
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.header {
+    margin-bottom: 20px;
+}
+
+.wallet-info {
+    margin-bottom: 20px;
+}
+
+.yew-logo {
+    width: 600px;
+}
+
+.header, .footer {
+    margin-bottom: 20px;
+}
+
+.header h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.footer p {
+    font-size: 14px;
+    color: #888888;
+    margin: 0;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #000;
+    color: #ffffff;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #3700b3;
+}
+
+button img {
+    width: 24px;
+    height: 24px;
+}
+
+button.disconnect {
+    background-color: #b00020;
+}
+
+button.disconnect:hover {
+    background-color: #7f0000;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
