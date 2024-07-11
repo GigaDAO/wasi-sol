@@ -31,7 +31,7 @@ jobs:
         curl -sSf https://raw.githubusercontent.com/solana-labs/solana/v1.17.17/install/solana-install-init.sh | sh -s - v1.18.15
     - name: Cleanup
       run: |
-        rm -r /home/runner/.cache/solana
+        : `rm -r $HOME/.cache/solana`
     - name: Install Anchor CLI
       run: |
         sudo apt-get update && sudo apt-get upgrade && sudo apt-get install -y pkg-config build-essential libudev-dev libssl-dev
