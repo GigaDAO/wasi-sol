@@ -5,7 +5,7 @@ use crate::{
     },
     provider::leptos::local_storage::use_local_storage,
 };
-use leptos::*;
+use leptos::{context::Provider, prelude::*};
 
 #[derive(Clone)]
 pub struct Wallets {
@@ -23,12 +23,12 @@ pub fn WalletProvider(
         format!("{:?}", Wallet::default()).to_string(),
     );
 
-    let wallet_context = create_memo(move |_| wallets.clone());
+    let wallet_context = Memo::new(move |_| wallets.clone());
 
     view! {
-        <Provider<Wallets> value={Wallets { wallets: wallet_context.get_untracked()}}>
+        <Provider value={Wallets { wallets: wallet_context.get_untracked()}}>
            {children()}
-        </Provider<Wallets>>
+        </Provider>
     }
 }
 pub fn use_wallet<W>(wallet_name: W) -> BaseWalletAdapter

@@ -8,10 +8,7 @@ keywords = ["blockchain", "solana", "wasm", "yew", "dioxus"]
 categories = ["web-programming", "cryptography", "wasm"]
 repository = "https://github.com/gigadao/wasi-sol"
 documentation = "https://docs.rs/wasi-sol"
-authors = [
-	"GigaDAO Core Maintainers",
-	"Mahmoud Harmouch <oss@wiseai.dev>",
-]
+authors = ["GigaDAO Core Maintainers", "Mahmoud Harmouch <oss@wiseai.dev>"]
 exclude = ["examples"]
 
 [dependencies]
@@ -29,15 +26,16 @@ solana-client-wasm = "1.18.0"
 emitter-rs = "0.0.5"
 yew = { version = "0.21.0", optional = true }
 dioxus = { version = "0.5", optional = true }
-leptos = { version = "0.6.12", optional = true }
+leptos = { version = "0.7.7", optional = true }
 serde-wasm-bindgen = "0.6.5"
 web-sys = { version = "0.3.69", features = ["Window"] }
 bincode = "1.3.3"
 
+
 [features]
-yew = ["dep:yew", ]
-dio = ["dioxus", ]
-lep = ["leptos", ]
+yew = ["dep:yew"]
+dio = ["dioxus"]
+lep = ["leptos"]
 
 [package.metadata.docs.rs]
 all-features = true

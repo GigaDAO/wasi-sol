@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::{html, prelude::*, task::spawn_local};
 
 use wasi_sol::{
     core::traits::WalletAdapter,
@@ -8,9 +8,9 @@ use wasi_sol::{
         connection::{use_connection, ConnectionProvider},
         wallet::{use_wallet, WalletProvider},
     },
-    transaction::Transaction,
     pubkey::Pubkey,
-    system_instruction
+    system_instruction,
+    transaction::Transaction,
 };
 
 use std::str::FromStr;
@@ -39,29 +39,33 @@ pub fn LoginPage() -> impl IntoView {
     let phantom_context = use_wallet::<Wallet>(Wallet::Phantom);
     let solflare_context = use_wallet::<Wallet>(Wallet::Solflare);
     let backpack_context = use_wallet::<Wallet>(Wallet::Backpack);
-    let (connected, set_connected) = create_signal(false);
-    let (phantom_wallet_adapter, set_phantom_wallet_adapter) = create_signal(phantom_context);
-    let (solflare_wallet_adapter, set_solflare_wallet_adapter) = create_signal(solflare_context);
-    let (backpack_wallet_adapter, set_sbackpack_wallet_adapter) = create_signal(backpack_context);
+    let (connected, set_connected) = signal(false);
+    let (phantom_wallet_adapter, set_phantom_wallet_adapter) = signal(phantom_context);
+    let (solflare_wallet_adapter, set_solflare_wallet_adapter) = signal(solflare_context);
+    let (backpack_wallet_adapter, set_sbackpack_wallet_adapter) = signal(backpack_context);
 
-    let input_dest_ref: NodeRef<html::Input> = create_node_ref();
-    let input_amount_ref: NodeRef<html::Input> = create_node_ref();
-    let input_msg_ref: NodeRef<html::Input> = create_node_ref();
+    let input_dest_ref: NodeRef<html::Input> = NodeRef::new();
+    let input_amount_ref: NodeRef<html::Input> = NodeRef::new();
+    let input_msg_ref: NodeRef<html::Input> = NodeRef::new();
 
-    let (dest, _set_dest) = create_signal(String::default());
-    let (amount, _set_amount) = create_signal(1);
-    let (msg, _set_msg) = create_signal(String::default());
-    let (sig, set_sig) = create_signal(String::default());
-    let (confirmed, set_confirmed) = create_signal(false);
+    let (dest, _set_dest) = signal(String::default());
+    let (amount, _set_amount) = signal(1);
+    let (msg, _set_msg) = signal(String::default());
+    let (sig, set_sig) = signal(String::default());
+    let (confirmed, set_confirmed) = signal(false);
 
     let transfer_sol_phantom = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
-            let input_dest = input_dest_ref.get()
-                .expect("<input> should be mounted")
-                .value();
-            let amount = input_amount_ref.get()
-                .expect("<input> should be mounted")
-                .value().parse::<u64>().unwrap();
+        let input_dest = input_dest_ref
+            .get()
+            .expect("<input> should be mounted")
+            .value();
+        let amount = input_amount_ref
+            .get()
+            .expect("<input> should be mounted")
+            .value()
+            .parse::<u64>()
+            .unwrap();
         spawn_local(async move {
             let mut wallet_info = phantom_wallet_adapter.get();
             let public_key = wallet_info.public_key().unwrap();
@@ -88,7 +92,8 @@ pub fn LoginPage() -> impl IntoView {
         ev.prevent_default();
         spawn_local(async move {
             let mut wallet_info = phantom_wallet_adapter.get();
-            let input_msg = input_msg_ref.get()
+            let input_msg = input_msg_ref
+                .get()
                 .expect("<input> should be mounted")
                 .value();
 
@@ -198,17 +203,17 @@ pub fn LoginPage() -> impl IntoView {
                                                     None
                                                 }
                                             }
-                                        }
+                                        }.into_any()
                                     } else if let Some(key) = solflare_wallet_adapter.get().public_key() {
                                         view!{
                                             <p>"Connected Wallet: " {move || solflare_wallet_adapter.get().name()} </p>
                                             <p>"Connected Public Key: " {move || key.to_string() } </p>
-                                        }
+                                        }.into_any()
                                     } else {
                                         view!{
                                             <p>"Connected but no wallet info available"</p>
                                             <p>{}</p>
-                                        }
+                                        }.into_any()
                                     }
                                 }
                             })
@@ -234,5 +239,5 @@ pub fn LoginPage() -> impl IntoView {
 fn main() {
     console_error_panic_hook::set_once();
     wasm_logger::init(wasm_logger::Config::default());
-    leptos::mount_to_body(|| view! { <App/> })
+    leptos::mount::mount_to_body(|| view! { <App/> })
 }

@@ -1,4 +1,4 @@
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::core::traits::WalletAdapter;
 use crate::core::wallet::BaseWalletAdapter;
@@ -24,11 +24,11 @@ pub fn LoginForm(
     let (connected, set_connected) = connected;
 
     let (mut phantom_wallet_adapter, mut set_phantom_wallet_adapter) =
-        create_signal(BaseWalletAdapter::default());
+        signal(BaseWalletAdapter::default());
     let (mut solflare_wallet_adapter, mut set_solflare_wallet_adapter) =
-        create_signal(BaseWalletAdapter::default());
+        signal(BaseWalletAdapter::default());
     let (mut backpack_wallet_adapter, mut set_backpack_wallet_adapter) =
-        create_signal(BaseWalletAdapter::default());
+        signal(BaseWalletAdapter::default());
 
     if phantom.is_some() {
         (phantom_wallet_adapter, set_phantom_wallet_adapter) = phantom.unwrap();
@@ -40,11 +40,11 @@ pub fn LoginForm(
         (backpack_wallet_adapter, set_backpack_wallet_adapter) = backpack.clone().unwrap();
     }
 
-    let (error, set_error) = create_signal(String::default());
+    let (error, set_error) = signal(String::default());
 
     let connect_phantom_wallet = move |_| {
         spawn_local(async move {
-            let mut wallet_info = phantom_wallet_adapter.get();
+            let mut wallet_info = phantom_wallet_adapter.get_untracked();
 
             wallet_info
                 .emitter
@@ -69,7 +69,7 @@ pub fn LoginForm(
 
     let connect_solflare_wallet = move |_| {
         spawn_local(async move {
-            let mut wallet_info = solflare_wallet_adapter.get();
+            let mut wallet_info = solflare_wallet_adapter.get_untracked();
 
             wallet_info
                 .emitter
@@ -94,7 +94,7 @@ pub fn LoginForm(
 
     let connect_backpack_wallet = move |_| {
         spawn_local(async move {
-            let mut wallet_info = backpack_wallet_adapter.get();
+            let mut wallet_info = backpack_wallet_adapter.get_untracked();
 
             wallet_info
                 .emitter
@@ -119,9 +119,9 @@ pub fn LoginForm(
 
     let disconnect_wallet = move |_| {
         spawn_local(async move {
-            let mut phantom_wallet_info = phantom_wallet_adapter.get();
-            let mut solflare_wallet_info = solflare_wallet_adapter.get();
-            let mut backpack_wallet_info = backpack_wallet_adapter.get();
+            let mut phantom_wallet_info = phantom_wallet_adapter.get_untracked();
+            let mut solflare_wallet_info = solflare_wallet_adapter.get_untracked();
+            let mut backpack_wallet_info = backpack_wallet_adapter.get_untracked();
 
             match phantom_wallet_info.disconnect().await {
                 Ok(confirmed) => {
@@ -171,7 +171,7 @@ pub fn LoginForm(
                                 <img src={backpack_wallet_adapter.get().icon()} alt="Backpack Wallet" class="button-icon" />
                                 "Connect Backpack Wallet"
                             </button>
-                        }
+                        }.into_any()
                     } else if let Some(_key) = phantom_wallet_adapter.get().public_key() {
                         view!{
                             <button class="disconnect-button" on:click=disconnect_wallet>
@@ -180,7 +180,7 @@ pub fn LoginForm(
                             </button>
                             <>
                             </>
-                        }
+                        }.into_any()
                     } else if let Some(_key) = solflare_wallet_adapter.get().public_key() {
                         view!{
                             <button class="disconnect-button" on:click=disconnect_wallet>
@@ -189,7 +189,7 @@ pub fn LoginForm(
                             </button>
                             <>
                             </>
-                        }
+                        }.into_any()
                     } else if let Some(_key) = backpack_wallet_adapter.get().public_key() {
                         view!{
                             <button class="disconnect-button" on:click=disconnect_wallet>
@@ -198,26 +198,26 @@ pub fn LoginForm(
                             </button>
                             <>
                             </>
-                        }
+                        }.into_any()
                     } else {
                         view!{
                             <button>
                             </button>
                             <>
                             </>
-                        }
+                        }.into_any()
                     }
                 }
                 {move ||
                     if !error.get().is_empty() {
                         view!{
                             <p class="error-message">{ error.get() }</p>
-                        }
+                        }.into_any()
                     }
                     else {
                         view!{
                             <p></p>
-                        }
+                        }.into_any()
                     }
                 }
             </div>

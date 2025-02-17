@@ -1,11 +1,11 @@
 use gloo_storage::{LocalStorage, Storage};
-use leptos::*;
+use leptos::prelude::*;
 
-pub fn use_local_storage(key: String, initial_value: String) -> (String, Callback<String>) {
+pub fn use_local_storage(key: String, initial_value: String) -> (String, Callback<(String,)>) {
     LocalStorage::set(&key, &initial_value).ok();
     let stored_value: String = LocalStorage::get(key.clone()).unwrap_or(initial_value.clone());
 
-    let (stored_value, set_stored_value) = create_signal(stored_value);
+    let (stored_value, set_stored_value) = signal(stored_value);
 
     let set_value = {
         let key = key.clone();
